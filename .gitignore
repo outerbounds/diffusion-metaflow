@@ -1,0 +1,6 @@
+models/
+.metaflow
+__pycache__
+.env/
+*.log
+*.sh
