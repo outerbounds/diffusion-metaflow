@@ -19,6 +19,7 @@ def safe_mkdirs(_dir):
 
 class ModelOperations:
 
+
     pretrained_model_path = Parameter(
         "model-path", type=click.Path(), default=MODEL_PATH
     )
@@ -35,11 +36,20 @@ class ModelOperations:
     model_version = Parameter("model-version", type=str, default=MODEL_VERSION)
 
     def get_artifact(self, name):
-        return getattr(self,name)
+        return getattr(self, name, None)
 
-    def save_artifact(self, name ,value):
-        setattr(self,name, value)
-
+    def save_artifact(self, name, value):
+        """
+        This method helps store keys to self that are dynamically constructed.
+        We store things to self because loading all artifacts in object can create on huge object which would take a lot of time when loading with the metaflow client.
+        Storing individual artifacts via this method can make the access to individual artifacts very fast when using the Metaflow client. If they are accessed via `Task` object the the object also offers a dictionary like interface to access the data.
+        """
+        # `ARTIFACT_REFERENCES` will hold all artifacts saved via `save_artifact` method.
+        # These references can be accessed via `get_artifact` method of the class.
+        if self.get_artifact("ARTIFACT_REFERENCES") is None:
+            self.ARTIFACT_REFERENCES = []
+        self.ARTIFACT_REFERENCES.append(name)
+        setattr(self, name, value)
 
     @staticmethod
     def _walk_directory(root):
@@ -58,6 +68,7 @@ class ModelOperations:
     def _upload_model(self):
         # This takes place on local from where we upload model to s3
         from metaflow import S3
+
         with S3(s3root=self.s3_model_path) as s3:
             s3.put_files(self._walk_directory(self.pretrained_model_path))
 
@@ -91,3 +102,40 @@ class ModelOperations:
                     return
         print("Uploading Model")
         self._upload_model()
+
+
+class TextToImageDiffusion:
+
+    batch_size = Parameter(
+        "batch-size",
+        type=int,
+        default=4,
+        help="controls the number of images to send to the GPU per batch",
+    )
+
+    output_width = Parameter(
+        "width", type=int, default=512, help="width of the output image"
+    )
+
+    output_height = Parameter(
+        "height", type=int, default=512, help="Height of the output image"
+    )
+
+    num_steps = Parameter(
+        "num-steps", type=int, default=60, help="Number of steps to run inference"
+    )
+
+    def infer_prompt(self, prompts, model_path, num_images, seed):
+        from diffusion import infer_prompt
+        for prompt in prompts:
+            images = infer_prompt(
+                model_path,
+                prompt,
+                num_images=num_images,
+                batch_size=self.batch_size,
+                width=self.output_width,
+                height=self.output_height,
+                num_steps=self.num_steps,
+                seed=seed,
+            )
+            yield (images, prompt)

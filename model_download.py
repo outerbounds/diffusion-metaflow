@@ -1,4 +1,4 @@
-# make sure you're logged in with `huggingface-cli login`
+# make sure you have signed the waiver on hugging face hub before downloading the model.
 import os
 from base import MODEL_PATH, MODEL_VERSION
 from diffusers import StableDiffusionPipeline, LMSDiscreteScheduler

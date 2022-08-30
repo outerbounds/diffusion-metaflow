@@ -33,6 +33,15 @@ def generate_images(
             num_inference_steps=num_steps,
         )["sample"]
 
+def _create_batchsizes(num_images, batch_size):
+    bs = []
+    num_loops = math.ceil(num_images / batch_size)
+    for i in range(1,num_loops+1,1):
+        if (num_images - i*batch_size) >= 0:
+            bs.append(batch_size)
+        else:
+            bs.append((num_images - (i-1)*batch_size))
+    return bs
 
 def infer_prompt(
     model_path,
@@ -54,15 +63,15 @@ def infer_prompt(
     generator = torch.manual_seed(seed)
     if use_gpu:
         generator = torch.cuda.manual_seed(seed)
-        pipe = pipe.to('cuda')
-    num_loops = math.ceil(num_images / batch_size)
+        pipe = pipe.to("cuda")
+
     all_images = []
-    for i in range(num_loops):
+    for _batch_size in _create_batchsizes(num_images, batch_size):
         all_images.extend(
             generate_images(
                 pipe,
                 prompt,
-                batch_size,
+                _batch_size,
                 use_gpu=use_gpu,
                 height=height,
                 width=width,
