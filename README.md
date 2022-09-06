@@ -2,24 +2,24 @@
 
 Creating tons of AI generated images using Stable Diffusion with Metaflow. 
 
-## Setting Up AWS Infrastructure
+# Setting Up AWS Infrastructure
 Before running the flow ensure that metaflow related infrastructure is [deployed](https://outerbounds.com/docs/aws-deployment-guide/) and [configured](https://outerbounds.com/docs/configure-metaflow/) on your AWS account and GPU's are configured for the compute environment (AWS Batch / EKS). 
 
 If you don't have infrastructure setup, you can set it up with this [cloudformation template](https://github.com/outerbounds/metaflow-tools/blob/master/aws/cloudformation/metaflow-cfn-template.yml). To deploy the GPU infrastructure on AWS, change the [ComputeEnvInstanceTypes](https://github.com/outerbounds/metaflow-tools/blob/d0da1fa4f9aa6845f8091d06a1b7a99962986c98/aws/cloudformation/metaflow-cfn-template.yml#L42) in the Cloudformation template or the Cloudformation UI. More detailed instructions on setting up infrastructure can be found [here](https://outerbounds.com/docs/cloudformation/)
 
-## Instructions to run the code. 
+# Instructions to run the code. 
 Before running the flow ensure you have the necessary AWS infrastructure setup for Metaflow. The flows requires `S3` datastore.
 
-### Step 1 : Download Stable Diffusion Huggingface model
+## Step 1 : Download Stable Diffusion Huggingface model
 - Ensure that you have signed the waiver for [CompVis/stable-diffusion-v-1-4-original](https://huggingface.co/CompVis/stable-diffusion-v-1-4-original) model on the Huggingface hub.
 - Create a [Huggingface hub access token](https://huggingface.co/docs/hub/security-tokens)
 - Run the below command after replacing `<myhuggingfacetoken>` with the Huggingface hub token created in the previous step. Run this command only once to download the model to the local machine. 
     ```sh
     HF_TOKEN=<myhuggingfacetoken> python model_download.py
     ```
-### Step 2: Run Metaflow Flows
+## Step 2: Run Metaflow Flows
 
-#### Generating Images from a simple prompts
+### ⭐ Generating Images from a simple prompts ⭐ 
 **Source File** : [meta_diffusers_text.py](./meta_diffusers_text.py)
 
 **Run Command** : 
@@ -70,8 +70,9 @@ Options:
 
 **Running Locally** : To run this flow locally, ensure that you have installed the `requirements.txt` file and commented the `@batch` decorator in the [flow file](./meta_diffusers_text.py). Since stable diffusion runs faster on GPU's we recommend the usage of GPUs. If you don't want to run on GPU's you can set the `--no-gpu` flag in the `run` command.
 
-#### Generating lots of images with different styles
+### ⭐ Generating lots of images with different styles ⭐
 **Source File** : [meta_dynamic_prompts.py](./meta_dynamic_prompts.py)
+
 **Run Command** : 
 ```sh
 python meta_dynamic_prompts.py run \
