@@ -1,4 +1,4 @@
-# Metaflow Stable Diffusion
+# Running Stable Diffusion With Metaflow 
 
 Creating tons of AI generated images using Stable Diffusion with Metaflow. 
 
