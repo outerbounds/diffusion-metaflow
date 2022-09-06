@@ -60,7 +60,6 @@ def infer_prompt(
         model_path,
         revision="fp16",
         torch_dtype=torch.float16,
-        use_auth_token=True,
     )
     generator = torch.manual_seed(seed)
     if use_gpu:

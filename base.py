@@ -144,6 +144,8 @@ class TextToImageDiffusion:
     num_steps = Parameter(
         "num-steps", type=int, default=60, help="Number of steps to run inference"
     )
+    
+    no_gpu = Parameter("no-gpu", is_flag=True, default=False, help="Run model on CPU and not GPU")
 
     def infer_prompt(self, prompts, model_path, num_images, seed):
         """
@@ -161,5 +163,6 @@ class TextToImageDiffusion:
                 height=self.output_height,
                 num_steps=self.num_steps,
                 seed=seed,
+                use_gpu=not self.no_gpu
             )
             yield (images, prompt)

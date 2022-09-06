@@ -23,11 +23,11 @@ class TextToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
     # Todo : make seed for a full range more customizable.
     seed = Parameter("seed", default=42, type=int)
 
-    max_gpus = Parameter(
-        "max-gpus",
+    max_parallel = Parameter(
+        "max-parallel",
         default=4,
         type=int,
-        help="This parameter will limit the amount of parallelisation we wish to do. If there are about a 100 images per prompt, this parameter will help derive the number of chunks that we need to make and the total images in each chunk.",
+        help="This parameter will limit the amount of parallelisation we wish to do. Based on the value set here, the foreach will fanout to that many workers.",
     )
 
     @step
@@ -42,7 +42,7 @@ class TextToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
 
         # create seed values for each inference step
         random.seed(self.seed)
-        chunk_size = math.ceil(self.num_images / self.max_gpus)
+        chunk_size = math.ceil(self.num_images / self.max_parallel)
         self.rand_seeds = [
             random.randint(1, 10**7) for i in range(0, self.num_images, chunk_size)
         ]
@@ -56,7 +56,7 @@ class TextToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
         with tempfile.TemporaryDirectory(self.model_version) as _dir:
             import math
 
-            chunk_size = math.ceil(self.num_images / self.max_gpus)
+            chunk_size = math.ceil(self.num_images / self.max_parallel)
             self.download_model(folder=_dir)
             idx = 0
             for images, prompt in self.infer_prompt(
