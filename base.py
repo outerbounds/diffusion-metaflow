@@ -31,10 +31,18 @@ class ModelOperations:
     """
 
     pretrained_model_path = Parameter(
-        "model-path", type=click.Path(), default=MODEL_PATH, help = "Path to the downloaded model on the local machine."
+        "model-path",
+        type=click.Path(),
+        default=MODEL_PATH,
+        help="Path to the downloaded model on the local machine.",
     )
 
-    force_upload = Parameter("force-upload", is_flag=True, default=False, help="Force upload the model from the local machine")
+    force_upload = Parameter(
+        "force-upload",
+        is_flag=True,
+        default=False,
+        help="Force upload the model from the local machine",
+    )
 
     s3_base_path = Parameter(
         "s3-prefix",
@@ -144,8 +152,6 @@ class TextToImageDiffusion:
     num_steps = Parameter(
         "num-steps", type=int, default=60, help="Number of steps to run inference"
     )
-    
-    no_gpu = Parameter("no-gpu", is_flag=True, default=False, help="Run model on CPU and not GPU")
 
     def infer_prompt(self, prompts, model_path, num_images, seed):
         """
@@ -163,6 +169,5 @@ class TextToImageDiffusion:
                 height=self.output_height,
                 num_steps=self.num_steps,
                 seed=seed,
-                use_gpu=not self.no_gpu
             )
             yield (images, prompt)

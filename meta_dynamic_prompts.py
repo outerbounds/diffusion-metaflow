@@ -152,7 +152,7 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
                 prompt_idx += 1
 
         # Create a `start,end` index list that will help create more foreach's for painting cards.
-        # We create a foreach to paint cards so that we can make a light (size-wise) HTML page for each card. 
+        # We create a foreach to paint cards so that we can make a light (size-wise) HTML page for each card.
         self.index_list = create_chunk_ranges(
             self.image_index, self.images_per_card
         )  # Will hold start,end
@@ -191,6 +191,7 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
 
     def create_table(self, image_index, cols=3):
         """Create a table of images for each style"""
+
         def _create_table(prompt, artifacts):
             table_rows = []
             row = [Markdown("## %s" % prompt)]
