@@ -33,15 +33,17 @@ def generate_images(
             num_inference_steps=num_steps,
         )["sample"]
 
+
 def _create_batchsizes(num_images, batch_size):
     bs = []
     num_loops = math.ceil(num_images / batch_size)
-    for i in range(1,num_loops+1,1):
-        if (num_images - i*batch_size) >= 0:
+    for i in range(1, num_loops + 1, 1):
+        if (num_images - i * batch_size) >= 0:
             bs.append(batch_size)
         else:
-            bs.append((num_images - (i-1)*batch_size))
+            bs.append((num_images - (i - 1) * batch_size))
     return bs
+
 
 def infer_prompt(
     model_path,

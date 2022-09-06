@@ -18,13 +18,23 @@ def safe_mkdirs(_dir):
 
 
 class ModelOperations:
+    """
+    ## ModelOpeartions
 
+    This class is reponsible to for saving and loading a model from an S3 bucket. This class can be used like a mixin with any FlowSpec class. The style of writing Metaflow flows allows scoping parameters and functionality. This will use the `metaflow.metaflow_config.DATASTORE_SYSROOT_S3` ie the `METAFLOW_DATASTORE_SYSROOT_S3` configuration variable to determine the root path for S3.
+
+    ### Parameters
+        - `pretrained_model_path` : Path to the model on the local machine
+        - `force_upload` : Even if the model is present in the S3 bucket, upload the model again.
+        - `s3_base_path` : S3 prefix for the path of the S3 saved model.
+        - `model_version` : Version of the Stable diffusion model.
+    """
 
     pretrained_model_path = Parameter(
-        "model-path", type=click.Path(), default=MODEL_PATH
+        "model-path", type=click.Path(), default=MODEL_PATH, help = "Path to the downloaded model on the local machine."
     )
 
-    force_upload = Parameter("force-upload", is_flag=True, default=False)
+    force_upload = Parameter("force-upload", is_flag=True, default=False, help="Force upload the model from the local machine")
 
     s3_base_path = Parameter(
         "s3-prefix",
@@ -40,7 +50,7 @@ class ModelOperations:
 
     def save_artifact(self, name, value):
         """
-        This method helps store keys to self that are dynamically constructed.
+        This method helps store keys to `self` that are dynamically constructed.
         We store things to self because loading all artifacts in object can create on huge object which would take a lot of time when loading with the metaflow client.
         Storing individual artifacts via this method can make the access to individual artifacts very fast when using the Metaflow client. If they are accessed via `Task` object the the object also offers a dictionary like interface to access the data.
         """
@@ -105,6 +115,16 @@ class ModelOperations:
 
 
 class TextToImageDiffusion:
+    """
+    ## TextToImageDiffusion
+    This is a wrapper over `diffusers` library. It exposes `metaflow.Parameter`'s neccessary for calling stable diffusion library.
+
+    ### Parameters
+        - `batch_size` : controls the number of images to send to the GPU per batch
+        - `output_width` : width of the output image
+        - `output_height` : width of the input image
+        - `num_steps` : number of steps to run the reverse diffusion process.
+    """
 
     batch_size = Parameter(
         "batch-size",
@@ -126,7 +146,11 @@ class TextToImageDiffusion:
     )
 
     def infer_prompt(self, prompts, model_path, num_images, seed):
+        """
+        Extract the images for each prompt and yield the (images, prompt).
+        """
         from diffusion import infer_prompt
+
         for prompt in prompts:
             images = infer_prompt(
                 model_path,
