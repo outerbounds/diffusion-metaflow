@@ -8,7 +8,7 @@ Before running the flow ensure that metaflow related infrastructure is [deployed
 If you don't have infrastructure setup, you can set it up with this [cloudformation template](https://github.com/outerbounds/metaflow-tools/blob/master/aws/cloudformation/metaflow-cfn-template.yml). To deploy the GPU infrastructure on AWS, change the [ComputeEnvInstanceTypes](https://github.com/outerbounds/metaflow-tools/blob/d0da1fa4f9aa6845f8091d06a1b7a99962986c98/aws/cloudformation/metaflow-cfn-template.yml#L42) in the Cloudformation template or the Cloudformation UI. More detailed instructions on setting up infrastructure can be found [here](https://outerbounds.com/docs/cloudformation/)
 
 # Instructions to run the code. 
-Before running the flow ensure you have the necessary AWS infrastructure setup for Metaflow. The flows requires `S3` datastore.
+Before running the flow ensure you have the necessary AWS infrastructure setup for Metaflow. These flows depend on S3. The code by default assumes GPU access but each flow can also be run without GPU's. Instructions on running with CPU can be found further down in the readme. 
 
 ## Step 1 : Download Stable Diffusion Huggingface model
 - Ensure that you have signed the waiver for [CompVis/stable-diffusion-v-1-4-original](https://huggingface.co/CompVis/stable-diffusion-v-1-4-original) model on the Huggingface hub.
