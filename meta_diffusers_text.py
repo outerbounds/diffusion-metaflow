@@ -6,23 +6,28 @@ from metaflow.metaflow_config import DATASTORE_SYSROOT_S3
 
 from base import DIFF_USERS_IMAGE, ModelOperations, TextToImageDiffusion
 
-DEFAULT_PROMPT = "Jack black as iron man, tone mapped, shiny, intricate, cinematic lighting, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration"
+DEFAULT_PROMPT = "mahatma gandhi, tone mapped, shiny, intricate, cinematic lighting, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration"
 
 
 class TextToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
+    """
+    Create images from prompt values using Stable Diffusion.
+    """
 
     prompts = Parameter("prompt", type=str, default=DEFAULT_PROMPT, multiple=True)
 
-    num_images = Parameter("num-images", type=int, default=10)
+    num_images = Parameter(
+        "num-images", type=int, default=10, help="Number of images to create per prompt"
+    )
 
     # Todo : make seed for a full range more customizable.
-    seed = Parameter("seed", default=420, type=int)
+    seed = Parameter("seed", default=42, type=int)
 
-    max_gpus = Parameter(
-        "max-gpus",
+    max_parallel = Parameter(
+        "max-parallel",
         default=4,
         type=int,
-        help="This parameter will limit the amount of parallelisation we wish to do. If there are about a 100 images, this parameter will help derive the number of chunks that we need to make and the total images in each chunk.",
+        help="This parameter will limit the amount of parallelisation we wish to do. Based on the value set here, the foreach will fanout to that many workers.",
     )
 
     @step
@@ -37,9 +42,9 @@ class TextToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
 
         # create seed values for each inference step
         random.seed(self.seed)
-        chunk_size = math.ceil(self.num_images / self.max_gpus)
+        chunk_size = math.ceil(self.num_images / self.max_parallel)
         self.rand_seeds = [
-            random.randint(1, 10 ** 7) for i in range(0, self.num_images, chunk_size)
+            random.randint(1, 10**7) for i in range(0, self.num_images, chunk_size)
         ]
         # Fanout the inference over the chunked seed values.
         self.next(self.generate_images, foreach="rand_seeds")
@@ -51,10 +56,12 @@ class TextToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
         with tempfile.TemporaryDirectory(self.model_version) as _dir:
             import math
 
-            chunk_size = math.ceil(self.num_images / self.max_gpus)
+            chunk_size = math.ceil(self.num_images / self.max_parallel)
             self.download_model(folder=_dir)
             idx = 0
-            for images, prompt in self.infer_prompt(self.prompts, _dir, chunk_size, self.input):
+            for images, prompt in self.infer_prompt(
+                self.prompts, _dir, chunk_size, self.input
+            ):
                 idx += len(images)
                 current.card.extend(
                     [Markdown("## Prompt : %s" % prompt)]
