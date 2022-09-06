@@ -38,6 +38,23 @@ def create_chunk_ranges(arr, chunk_size):
     return index_list
 
 
+def create_card_url(ui_url, task):
+    fl, rn, st, ts = task.pathspec.split("/")
+    cards = get_cards(task)
+    return "%s/api/flows/%s/runs/%s/steps/%s/tasks/%s/cards/%s" % (
+        ui_url,
+        fl,
+        rn,
+        st,
+        ts,
+        cards[0].hash,
+    )
+
+
+def create_prompt(prompt, style):
+    return "%s by %s" % (prompt, style)
+
+
 class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
     """
     Create multiple prompts in different styles using Stable Diffusion
@@ -82,25 +99,9 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
     seed = Parameter("seed", default=42, type=int, help="Seed to use for inference.")
 
     @staticmethod
-    def create_prompt(prompt, style):
-        return "%s by %s" % (prompt, style)
-
     @staticmethod
     def create_image_id():
         return "image_%s" % str(uuid.uuid4())
-
-    @staticmethod
-    def create_card_url(ui_url, task):
-        fl, rn, st, ts = task.pathspec.split("/")
-        cards = get_cards(task)
-        return "%s/api/flows/%s/runs/%s/steps/%s/tasks/%s/cards/%s" % (
-            ui_url,
-            fl,
-            rn,
-            st,
-            ts,
-            cards[0].hash,
-        )
 
     @step
     def start(self):
@@ -130,7 +131,7 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
         self.prompt_combo = list(
             itertools.product(self.input_prompts, [self.inference_style])
         )
-        self.prompts = [self.create_prompt(p, s) for p, s in self.prompt_combo]
+        self.prompts = [create_prompt(p, s) for p, s in self.prompt_combo]
 
         # Download the model, run the model on the prompt and save the image given by the model.
         with tempfile.TemporaryDirectory(self.model_version) as _dir:
@@ -180,7 +181,7 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
         self.foreach_join_commit(inputs)
         self.next(self.end)
 
-    @card
+    @card(type="blank")
     @step
     def end(self):
         # Create an index of the cards created in this step's card
@@ -242,16 +243,21 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
         if self.metaflow_ui_url.endswith("/"):
             mf_ui_url = self.metaflow_ui_url[:-1]
 
-        from metaflow import current, Run
+        from metaflow import current, Run, parallel_map, Task
 
         run_pathspec = "/".join(([current.flow_name, current.run_id]))
-        for t in Run(run_pathspec)["paint_cards"]:
+        tasks_pathspecs = [t.pathspec for t in list(Run(run_pathspec)["paint_cards"])]
+
+        def make_md_str(pthspc):
+            t = Task(pthspc)
             style = t["inference_style"].data
             prompts = ", ".join(set([p for p, _, _ in t["image_index"].data]))
-            url_path = self.create_card_url(mf_ui_url, t)
-            card_paths.append(
-                Markdown("[[%s]](%s)" % (self.create_prompt(prompts, style), url_path))
-            )
+            url_path = create_card_url(mf_ui_url, t)
+            md_str = "[[%s]](%s)" % (create_prompt(prompts, style), url_path)
+            return md_str
+
+        md_strs = parallel_map(make_md_str, tasks_pathspecs)
+        card_paths.extend([Markdown(m) for m in md_strs])
         return [Markdown("# Path To Cards On Metaflow UI")] + card_paths
 
 
