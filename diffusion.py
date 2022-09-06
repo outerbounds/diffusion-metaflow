@@ -9,22 +9,12 @@ def generate_images(
     prompt,
     batch_size,
     generator=None,
-    use_gpu=True,
     height=512,
     width=768,
     num_steps=52,
 ):
     _prompt = [prompt] * batch_size
-    if use_gpu:
-        with autocast("cuda"):
-            return model(
-                _prompt,
-                height=height,
-                width=width,
-                generator=generator,
-                num_inference_steps=num_steps,
-            )["sample"]
-    else:
+    with autocast("cuda"):
         return model(
             _prompt,
             height=height,
@@ -54,17 +44,14 @@ def infer_prompt(
     height=512,
     num_steps=51,
     seed=420,
-    use_gpu=True,
 ):
     pipe = StableDiffusionPipeline.from_pretrained(
         model_path,
         revision="fp16",
         torch_dtype=torch.float16,
     )
-    generator = torch.manual_seed(seed)
-    if use_gpu:
-        generator = torch.cuda.manual_seed(seed)
-        pipe = pipe.to("cuda")
+    generator = torch.cuda.manual_seed(seed)
+    pipe = pipe.to("cuda")
 
     all_images = []
     for _batch_size in _create_batchsizes(num_images, batch_size):
@@ -73,7 +60,6 @@ def infer_prompt(
                 pipe,
                 prompt,
                 _batch_size,
-                use_gpu=use_gpu,
                 height=height,
                 width=width,
                 generator=generator,
