@@ -60,7 +60,7 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
     Create multiple prompts in different styles using Stable Diffusion
     """
 
-    input_prompts = Parameter(
+    subjects = Parameter(
         "subject",
         type=str,
         default=DEFAULT_PROMPT,
@@ -129,7 +129,7 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
         self.inference_seed, self.inference_style = self.input
         # Merge the prompts and style created in the foreach
         self.prompt_combo = list(
-            itertools.product(self.input_prompts, [self.inference_style])
+            itertools.product(self.subjects, [self.inference_style])
         )
         self.prompts = [create_prompt(p, s) for p, s in self.prompt_combo]
 
