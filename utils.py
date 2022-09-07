@@ -1,6 +1,7 @@
 import math
 from metaflow.cards import get_cards
 
+
 def create_chunk_ranges(arr, chunk_size):
     num_splits = math.ceil(len(arr) / chunk_size)
     index_list = []  # Will hold start,end delimiters
@@ -29,3 +30,36 @@ def create_card_url(ui_url, task):
 def create_prompt(prompt, style):
     return "%s by %s" % (prompt, style)
 
+
+def create_card_index(metaflow_ui_url=None, cols=3):
+    """construct the URL of each card in one single index and add it to current card"""
+    card_paths = []
+    if metaflow_ui_url is None:
+        return
+    mf_ui_url = metaflow_ui_url
+    if metaflow_ui_url.endswith("/"):
+        mf_ui_url = metaflow_ui_url[:-1]
+
+    from metaflow import current, Run, parallel_map, Task
+    from metaflow.cards import Markdown, Table
+    from collections import defaultdict
+
+    run_pathspec = "/".join(([current.flow_name, current.run_id]))
+    tasks_pathspecs = [t.pathspec for t in list(Run(run_pathspec)["paint_cards"])]
+
+    def make_md_str(pthspc):
+        t = Task(pthspc)
+        style = t["inference_style"].data
+        prompts = ", ".join(set([p for p, _, _ in t["image_index"].data]))
+        url_path = create_card_url(mf_ui_url, t)
+        md_str = "## [%s](%s)" % (prompts, url_path)
+        return md_str, style
+
+    md_strs = parallel_map(make_md_str, tasks_pathspecs)
+
+    tab_res = defaultdict(list)
+    for md_str, style in md_strs:
+        tab_res[style].append(md_str)
+    for k, v in tab_res.items():
+        card_paths.append([Markdown("## %s" % k)] + [Markdown(vx) for vx in v])
+    return [Markdown("# Path To Cards On Metaflow UI"), Table(card_paths)]

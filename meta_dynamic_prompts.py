@@ -25,7 +25,8 @@ DEFAULT_PROMPT = [
     "alan turing",
 ]
 
-from utils import create_chunk_ranges, create_card_url, create_prompt
+from utils import create_chunk_ranges, create_prompt, create_card_index
+
 
 class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
     """
@@ -71,7 +72,6 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
     seed = Parameter("seed", default=42, type=int, help="Seed to use for inference.")
 
     @staticmethod
-    @staticmethod
     def create_image_id():
         return "image_%s" % str(uuid.uuid4())
 
@@ -80,7 +80,7 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
         import random
 
         styles = self.styles.split(",")
-        # Uploade the model if it is not present.
+        # Upload the model if it is not present.
         self.upload_model_if_none_exists()
 
         # create seed values for each inference step . Since we are parallelizing over styles we will create the same number
@@ -157,7 +157,7 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
     @step
     def end(self):
         # Create an index of the cards created in this step's card
-        card_indx_md = self.create_card_index()
+        card_indx_md = create_card_index(self.metaflow_ui_url)
         if card_indx_md is not None:
             current.card.extend(card_indx_md)
         print("Done!")
@@ -205,32 +205,6 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
                     ),
                 )
             self.image_index.extend(input.image_index)
-
-    def create_card_index(self):
-        """construct the URL of each card in one single index and add it to current card"""
-        card_paths = []
-        if self.metaflow_ui_url is None:
-            return
-        mf_ui_url = self.metaflow_ui_url
-        if self.metaflow_ui_url.endswith("/"):
-            mf_ui_url = self.metaflow_ui_url[:-1]
-
-        from metaflow import current, Run, parallel_map, Task
-
-        run_pathspec = "/".join(([current.flow_name, current.run_id]))
-        tasks_pathspecs = [t.pathspec for t in list(Run(run_pathspec)["paint_cards"])]
-
-        def make_md_str(pthspc):
-            t = Task(pthspc)
-            style = t["inference_style"].data
-            prompts = ", ".join(set([p for p, _, _ in t["image_index"].data]))
-            url_path = create_card_url(mf_ui_url, t)
-            md_str = "[[%s]](%s)" % (create_prompt(prompts, style), url_path)
-            return md_str
-
-        md_strs = parallel_map(make_md_str, tasks_pathspecs)
-        card_paths.extend([Markdown(m) for m in md_strs])
-        return [Markdown("# Path To Cards On Metaflow UI")] + card_paths
 
 
 if __name__ == "__main__":
