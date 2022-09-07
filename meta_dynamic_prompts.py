@@ -61,11 +61,11 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
     """
 
     input_prompts = Parameter(
-        "prompt",
+        "subject",
         type=str,
         default=DEFAULT_PROMPT,
         multiple=True,
-        help="The prompt based on which images are generated",
+        help="The subject based on which images are generated",
     )
 
     styles = Parameter(

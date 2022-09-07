@@ -3,4 +3,5 @@ diffusers
 transformers 
 scipy 
 ftfy
+matplotlib
 pillow

@@ -76,10 +76,10 @@ Options:
 ```sh
 python meta_dynamic_prompts.py run \
     --num-images 4 \
-    --prompt "mahatma gandhi" \
-    --prompt "alan turing" \
-    --prompt "albert einstein" \
-    --prompt "steve jobs" \
+    --subject "mahatma gandhi" \
+    --subject "alan turing" \
+    --subject "albert einstein" \
+    --subject "steve jobs" \
     --styles "Pablo Picasso, banksy, artstation" \
     --num-steps 45 \
     --seed 6372
@@ -104,7 +104,7 @@ Options:
   --width INTEGER            width of the output image  [default: 512]
   --height INTEGER           Height of the output image  [default: 512]
   --num-steps INTEGER        Number of steps to run inference  [default: 60]
-  --prompt TEXT              The prompt based on which images are generated
+  --subject TEXT              The subject based on which images are generated
                              [default: Mahatma gandhi, dalai lama, alan
                              turing]
 
