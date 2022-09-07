@@ -1,26 +1,52 @@
-# Running Stable Diffusion With Metaflow 
+# Run Stable Diffusion With Metaflow 
 
-Creating tons of AI generated images using Stable Diffusion with Metaflow. 
+This repository offers you a framework to create massive amounts of AI-generated images using the Stable Diffusion model. 
+The Stable Diffusion model is integrated into a Metaflow workflow that will help you scale horizontally or vertically to quickly produce as many images as you need. To run the code in this repository you will need access to a Metaflow deployment configured with S3 storage.
 
-# Setting Up AWS Infrastructure
-Before running the flow ensure that metaflow related infrastructure is [deployed](https://outerbounds.com/docs/aws-deployment-guide/) and [configured](https://outerbounds.com/docs/configure-metaflow/) on your AWS account and GPU's are configured for the compute environment (AWS Batch / EKS). 
+
+# Operate Metaflow on AWS Infrastructure
+Before running the flow ensure that Metaflow-related infrastructure is [deployed](https://outerbounds.com/docs/aws-deployment-guide/) and [configured](https://outerbounds.com/docs/configure-metaflow/) on your AWS account and GPU's are configured for the compute environment (AWS Batch / EKS). 
 
 If you don't have infrastructure setup, you can set it up with this [cloudformation template](https://github.com/outerbounds/metaflow-tools/blob/master/aws/cloudformation/metaflow-cfn-template.yml). To deploy the GPU infrastructure on AWS, change the [ComputeEnvInstanceTypes](https://github.com/outerbounds/metaflow-tools/blob/d0da1fa4f9aa6845f8091d06a1b7a99962986c98/aws/cloudformation/metaflow-cfn-template.yml#L42) in the Cloudformation template or the Cloudformation UI. More detailed instructions on setting up infrastructure can be found [here](https://outerbounds.com/docs/cloudformation/)
 
-# Instructions to run the code. 
+
+# Install Dependencies
+
+## Use `requirements.txt` with `venv`
+```
+python venv -m ./meta-diffusion
+source ./meta-diffusion/bin/activate
+```
+Note if you get an error installing the `trasformers` library, you may need to install the [Rust compiler](https://rustup.rs/). You can do so like:
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+## Use `env.yml` with `conda`
+```
+conda install mamba -n base -c conda-forge
+mamba env create -f env.yml
+conda activate meta-diffusion
+```
+
+# Run the Code
 Before running the flow ensure you have the necessary AWS infrastructure setup for Metaflow. These flows require S3 and GPU/s.
 
-## Step 1 : Download Stable Diffusion Huggingface model
+
+## Step 1 : Download the Stable Diffusion Huggingface model
 - Ensure that you have signed the waiver for [CompVis/stable-diffusion-v-1-4-original](https://huggingface.co/CompVis/stable-diffusion-v-1-4-original) model on the Huggingface hub.
 - Create a [Huggingface hub access token](https://huggingface.co/docs/hub/security-tokens)
 - Run the below command after replacing `<myhuggingfacetoken>` with the Huggingface hub token created in the previous step. Run this command only once to download the model to the local machine. 
     ```sh
     HF_TOKEN=<myhuggingfacetoken> python model_download.py
     ```
+
 ## Step 2: Run Metaflow Flows
 
-### ⭐ Generating Images from a simple prompts ⭐ 
+
+### ⭐ Generate Images from a Simple Prompt ⭐ 
 **Source File** : [meta_diffusers_text.py](./meta_diffusers_text.py)
+
 
 **Run Command** : 
 ```sh
@@ -69,7 +95,8 @@ Options:
 
 **Running Locally** : To run this flow locally, ensure that you have installed the `requirements.txt` file and commented the `@batch` decorator in the [flow file](./meta_diffusers_text.py).
 
-### ⭐ Generating lots of images with different styles ⭐
+
+### ⭐ Generate Many Images with Diverse Styles ⭐
 **Source File** : [meta_dynamic_prompts.py](./meta_dynamic_prompts.py)
 
 **Run Command** : 
