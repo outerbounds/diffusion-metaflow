@@ -1,7 +1,7 @@
 # Run Stable Diffusion With Metaflow 👋
 
 This repository offers you a framework to create massive amounts of AI-generated images using the Stable Diffusion model. 
-The Stable Diffusion model is integrated into a Metaflow workflow that will help you scale horizontally or vertically to quickly produce as many images as you need. To run the code in this repository you will need access to a Metaflow deployment configured with S3 storage.
+The Stable Diffusion model is integrated into a Metaflow workflow that will help you scale horizontally or vertically to quickly produce as many images as you need. To run the code in this repository you will need access to a Metaflow deployment configured with S3 storage. If you want to learn more about Metaflow or need help getting set up, find us on [Slack](http://slack.outerbounds.co/)!
 
 ![](/images/einstein_grid.png)
 
