@@ -1,8 +1,13 @@
-# Run Stable Diffusion With Metaflow 
+# Run Stable Diffusion With Metaflow 👋
 
 This repository offers you a framework to create massive amounts of AI-generated images using the Stable Diffusion model. 
 The Stable Diffusion model is integrated into a Metaflow workflow that will help you scale horizontally or vertically to quickly produce as many images as you need. To run the code in this repository you will need access to a Metaflow deployment configured with S3 storage.
 
+![](/images/einstein_grid.png)
+
+<p align = "center">
+Stable Diffusion Intepretations of Einstein
+</p>
 
 # Operate Metaflow on AWS Infrastructure
 Before running the flow ensure that Metaflow-related infrastructure is [deployed](https://outerbounds.com/docs/aws-deployment-guide/) and [configured](https://outerbounds.com/docs/configure-metaflow/) on your AWS account and GPU's are configured for the compute environment (AWS Batch / EKS). 
@@ -12,7 +17,17 @@ If you don't have infrastructure setup, you can set it up with this [cloudformat
 
 # Install Dependencies
 
+## Use `env.yml` with `conda`
+
+We have included a conda environment in the form of a `env.yml` file for you to use. You can install and activate the environemnent by running the following commands from your terminal:
+```
+conda install mamba -n base -c conda-forge
+mamba env create -f env.yml
+conda activate meta-diffusion
+```
+
 ## Use `requirements.txt` with `venv`
+If you prefer to use [venv](https://docs.python.org/3/library/venv.html) you can create and activate a new environment by running the following commands from your terminal:
 ```
 python venv -m ./meta-diffusion
 source ./meta-diffusion/bin/activate
@@ -20,13 +35,6 @@ source ./meta-diffusion/bin/activate
 Note if you get an error installing the `trasformers` library, you may need to install the [Rust compiler](https://rustup.rs/). You can do so like:
 ```
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-## Use `env.yml` with `conda`
-```
-conda install mamba -n base -c conda-forge
-mamba env create -f env.yml
-conda activate meta-diffusion
 ```
 
 # Run the Code
