@@ -21,7 +21,11 @@ class ModelOperations:
     """
     ## ModelOpeartions
 
-    This class is reponsible to for saving and loading a model from an S3 bucket. This class can be used like a mixin with any FlowSpec class. The style of writing Metaflow flows allows scoping parameters and functionality. This will use the `metaflow.metaflow_config.DATASTORE_SYSROOT_S3` ie the `METAFLOW_DATASTORE_SYSROOT_S3` configuration variable to determine the root path for S3.
+    This class is responsible to for saving and loading a model from an S3 bucket. 
+    This class can be used like a mixin with any FlowSpec class. 
+    The style of writing Metaflow flows allows scoping parameters and functionality. 
+    This will use the `metaflow.metaflow_config.DATASTORE_SYSROOT_S3` ie the `METAFLOW_DATASTORE_SYSROOT_S3` configuration variable 
+    to determine the root path for S3.
 
     ### Parameters
         - `pretrained_model_path` : Path to the model on the local machine
