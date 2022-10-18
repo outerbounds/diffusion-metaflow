@@ -32,7 +32,7 @@ If you prefer to use [venv](https://docs.python.org/3/library/venv.html) you can
 python venv -m ./meta-diffusion
 source ./meta-diffusion/bin/activate
 ```
-Note if you get an error installing the `trasformers` library, you may need to install the [Rust compiler](https://rustup.rs/). You can do so like:
+Note if you get an error installing the `transformers` library, you may need to install the [Rust compiler](https://rustup.rs/). You can do so like:
 ```
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
