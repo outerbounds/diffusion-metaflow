@@ -19,7 +19,7 @@ If you don't have infrastructure setup, you can set it up with this [cloudformat
 
 ## Use `env.yml` with `conda`
 
-We have included a conda environment in the form of a `env.yml` file for you to use. You can install and activate the environemnent by running the following commands from your terminal:
+We have included a conda environment in the form of a `env.yml` file for you to use. You can install and activate the environment by running the following commands from your terminal:
 ```
 conda install mamba -n base -c conda-forge
 mamba env create -f env.yml
