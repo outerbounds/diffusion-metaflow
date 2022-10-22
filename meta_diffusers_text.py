@@ -50,7 +50,7 @@ class TextToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
         self.next(self.generate_images, foreach="rand_seeds")
 
     @card
-    @batch(image=DIFF_USERS_IMAGE, gpu=1, cpu=4, memory=8000)
+    @batch(image=DIFF_USERS_IMAGE, gpu=1, cpu=4, memory=16000)
     @step
     def generate_images(self):
         with tempfile.TemporaryDirectory(self.model_version) as _dir:
