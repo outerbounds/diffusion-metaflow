@@ -1,7 +1,7 @@
 jupyterlab==3.2.9
 metaflow
 nbformat==5.4.0
-notebook==6.4.10
+notebook==6.4.12
 diffusers==0.2.4  
 transformers==4.21.3
 scipy==1.9.1
