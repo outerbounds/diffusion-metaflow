@@ -1,8 +1,9 @@
 import math
 from torch import autocast
 import torch
-from diffusers import StableDiffusionPipeline
+from diffusers import AutoPipelineForText2Image
 
+SD_XL_BASE = "stable-diffusion-xl-base-1.0"
 
 def generate_images(
     model,
@@ -15,13 +16,17 @@ def generate_images(
 ):
     _prompt = [prompt] * batch_size
     with autocast("cuda"):
-        return model(
+        output = model(
             _prompt,
             height=height,
             width=width,
             generator=generator,
             num_inference_steps=num_steps,
-        )["sample"]
+        )
+    if model.__class__.__name__ == "StableDiffusionXLPipeline":
+        print("returns SDXL Image pipeline output")
+        return output.images # List[PIL.Image]
+    return output["sample"]
 
 
 def _create_batchsizes(num_images, batch_size):
@@ -45,11 +50,12 @@ def infer_prompt(
     num_steps=51,
     seed=420,
 ):
-    pipe = StableDiffusionPipeline.from_pretrained(
+    pipe = AutoPipelineForText2Image.from_pretrained(
         model_path,
         revision="fp16",
         torch_dtype=torch.float16,
     )
+    print("Using pipeline", pipe)
     generator = torch.cuda.manual_seed(seed)
     pipe = pipe.to("cuda")
 
@@ -66,4 +72,5 @@ def infer_prompt(
                 num_steps=num_steps,
             )
         )
+        print("Finished batch of images")
     return all_images

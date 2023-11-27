@@ -2,9 +2,10 @@ import math
 import os
 import tempfile
 import uuid
-from metaflow import FlowSpec, step, Parameter, batch, card, current
+from metaflow import FlowSpec, step, Parameter, batch, card, current, kubernetes
 from metaflow.cards import Image, Markdown, Table, get_cards
 from metaflow.metaflow_config import DATASTORE_SYSROOT_S3
+from metaflow.metaflow_config import UI_URL
 
 from base import DIFF_USERS_IMAGE, ModelOperations, TextToImageDiffusion
 
@@ -20,9 +21,9 @@ DEFAULT_STYLES = ",".join(
 )
 
 DEFAULT_PROMPT = [
-    "Mahatma gandhi",
-    "dalai lama",
-    "alan turing",
+    "Elon Musk",
+    # "dalai lama",
+    # "alan turing",
 ]
 
 from utils import create_chunk_ranges, create_prompt, create_card_index
@@ -65,7 +66,7 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
     metaflow_ui_url = Parameter(
         "ui-url",
         type=str,
-        default=None,
+        default=UI_URL,
         help="Url to the Metaflow UI. If provided then an index card is created for the `join_styles` @step",
     )
 
@@ -93,7 +94,7 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
         self.next(self.generate_images, foreach="style_rand_seeds")
 
     @card
-    @batch(image=DIFF_USERS_IMAGE, gpu=1, cpu=4, memory=16000)
+    @kubernetes(image=DIFF_USERS_IMAGE, gpu=1, cpu=4, memory=16000)
     @step
     def generate_images(self):
         import itertools

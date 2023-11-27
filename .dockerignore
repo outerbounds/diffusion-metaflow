@@ -1,2 +1,6 @@
 models
 .env
+.metaflow
+__pycache__
+images/
+*.ipynb

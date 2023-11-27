@@ -1,13 +1,13 @@
 import shutil
 from metaflow import Parameter
-from metaflow.metaflow_config import DATASTORE_SYSROOT_S3
+from metaflow.metaflow_config import DATATOOLS_S3ROOT
 import os
 from metaflow._vendor import click
 
-DIFF_USERS_IMAGE = "valayob/diffusers-base"
+DIFF_USERS_IMAGE = "valayob/sdvideo-base:1.1"
 MODEL_PATH = "./models"
 MODELS_BASE_S3_PATH = "models/diffusion-models/"
-MODEL_VERSION = "stable-diffusion-v1-4"
+MODEL_VERSION = "stable-diffusion-xl-base-1.0.1"
 
 
 def safe_mkdirs(_dir):
@@ -108,7 +108,7 @@ class ModelOperations:
     @property
     def s3_model_path(self):
         return os.path.join(
-            os.path.dirname(DATASTORE_SYSROOT_S3),
+            os.path.dirname(DATATOOLS_S3ROOT),
             self.s3_base_path,
             self.model_version,
         )
@@ -141,7 +141,7 @@ class TextToImageDiffusion:
     batch_size = Parameter(
         "batch-size",
         type=int,
-        default=4,
+        default=2,
         help="controls the number of images to send to the GPU per batch",
     )
 
@@ -157,12 +157,12 @@ class TextToImageDiffusion:
         "num-steps", type=int, default=60, help="Number of steps to run inference"
     )
 
-    def infer_prompt(self, prompts, model_path, num_images, seed):
+    def infer_prompt(self, prompts, model_path,  num_images, seed):
         """
         Extract the images for each prompt and yield the (images, prompt).
         """
         from diffusion import infer_prompt
-
+        img_prompts = []
         for prompt in prompts:
             images = infer_prompt(
                 model_path,
@@ -174,4 +174,5 @@ class TextToImageDiffusion:
                 num_steps=self.num_steps,
                 seed=seed,
             )
-            yield (images, prompt)
+            img_prompts.append((images, prompt))
+        return img_prompts

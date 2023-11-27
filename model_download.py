@@ -1,14 +1,11 @@
 # make sure you have signed the waiver on hugging face hub before downloading the model.
 import os
 from base import MODEL_PATH, MODEL_VERSION
-from diffusers import StableDiffusionPipeline, LMSDiscreteScheduler
-
-lms = LMSDiscreteScheduler(
-    beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear"
-)
-pipe = StableDiffusionPipeline.from_pretrained(
-    "CompVis/%s" % MODEL_VERSION,
-    scheduler=lms,
+import torch
+from diffusers import AutoPipelineForText2Image
+pipe = AutoPipelineForText2Image.from_pretrained(
+    "stabilityai/stable-diffusion-xl-base-1.0",
+    torch_dtype=torch.float16, variant="fp16", use_safetensors=True,
     use_auth_token=os.environ["HF_TOKEN"],
 )
 pipe.save_pretrained(MODEL_PATH)
