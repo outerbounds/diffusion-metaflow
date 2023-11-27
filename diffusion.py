@@ -15,14 +15,13 @@ def generate_images(
     num_steps=52,
 ):
     _prompt = [prompt] * batch_size
-    with autocast("cuda"):
-        output = model(
-            _prompt,
-            height=height,
-            width=width,
-            generator=generator,
-            num_inference_steps=num_steps,
-        )
+    output = model(
+        _prompt,
+        height=height,
+        width=width,
+        generator=generator,
+        num_inference_steps=num_steps,
+    )
     if model.__class__.__name__ == "StableDiffusionXLPipeline":
         print("returns SDXL Image pipeline output")
         return output.images # List[PIL.Image]
@@ -52,8 +51,9 @@ def infer_prompt(
 ):
     pipe = AutoPipelineForText2Image.from_pretrained(
         model_path,
-        revision="fp16",
+        variant="fp16",
         torch_dtype=torch.float16,
+        use_safetensors=True,
     )
     print("Using pipeline", pipe)
     generator = torch.cuda.manual_seed(seed)
