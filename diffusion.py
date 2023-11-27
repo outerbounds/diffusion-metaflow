@@ -1,10 +1,26 @@
 import math
 from torch import autocast
 import torch
+import os
 from diffusers import AutoPipelineForText2Image
 
 SD_XL_BASE = "stable-diffusion-xl-base-1.0"
 SUPPORTED_PIPELINES = ["StableDiffusionXLPipeline", "StableDiffusionPipeline"]
+
+IMAGE_MODEL_NAME = SD_XL_BASE
+IMAGE_MODEL_ORG = "stabilityai"
+IMAGE_MODEL_PATH = "./models"
+
+
+def download_model(model_path=IMAGE_MODEL_PATH):
+    image_pipe = AutoPipelineForText2Image.from_pretrained(
+        f"{IMAGE_MODEL_ORG}/{IMAGE_MODEL_NAME}",
+        torch_dtype=torch.float16,
+        variant="fp16",
+        use_safetensors=True,
+        use_auth_token=os.environ["HF_TOKEN"],
+    )
+    image_pipe.save_pretrained(model_path)
 
 
 def _is_pipeline_supported(pipe):

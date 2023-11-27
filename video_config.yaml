@@ -1,14 +1,14 @@
 video:
   model_config:
     model_store:
-      pretrained_model_path: ./models
+      pretrained_model_path: ./video-models
       force_upload: false
       s3_prefix: models/diffusion-models/
-      model_version: stable-diffusion-xl-base-1.0.1
+      model_version: stable-video-diffusion-img2vid
     model_name: svd
   inference_config:
     frame_rate: 10
-    decoding_timesteps: 14
+    decoding_timesteps: 2
     num_steps: 50
     num_frames: 50
   seed: 42
