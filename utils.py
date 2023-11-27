@@ -63,3 +63,20 @@ def create_card_index(metaflow_ui_url=None, cols=3):
     for k, v in tab_res.items():
         card_paths.append([Markdown("## %s" % k)] + [Markdown(vx) for vx in v])
     return [Markdown("# Path To Cards On Metaflow UI"), Table(card_paths)]
+
+
+def unit_convert(number, base_unit, convert_unit):
+    # base_unit : GB or MB or KB or B
+    # convert_unit : GB or MB or KB or B
+    # number : number of base_unit
+    # return : number of convert_unit
+    units = ["B", "KB", "MB", "GB"]
+    if base_unit not in units or convert_unit not in units:
+        raise ValueError("Invalid unit")
+    base_unit_index = units.index(base_unit)
+    convert_unit_index = units.index(convert_unit)
+    factor = pow(1024, abs(base_unit_index - convert_unit_index))
+    if base_unit_index < convert_unit_index:
+        return round(number / factor, 3)
+    else:
+        return round(number * factor, 3)

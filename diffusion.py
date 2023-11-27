@@ -1,7 +1,26 @@
 import math
 from torch import autocast
 import torch
-from diffusers import StableDiffusionPipeline
+from diffusers import AutoPipelineForText2Image
+
+SD_XL_BASE = "stable-diffusion-xl-base-1.0"
+SUPPORTED_PIPELINES = ["StableDiffusionXLPipeline", "StableDiffusionPipeline"]
+
+
+def _is_pipeline_supported(pipe):
+    return pipe.__class__.__name__ in SUPPORTED_PIPELINES
+
+
+def _retrieve_images(pipe, pipe_output):
+    if pipe.__class__.__name__ == "StableDiffusionXLPipeline":
+        return pipe_output.images
+    elif pipe.__class__.__name__ == "StableDiffusionPipeline":
+        return pipe_output["sample"]
+    else:
+        raise ValueError(
+            "Unsupported pipeline, please use one of the following pipelines: %s"
+            % ", ".join(SUPPORTED_PIPELINES)
+        )
 
 
 def generate_images(
@@ -14,14 +33,14 @@ def generate_images(
     num_steps=52,
 ):
     _prompt = [prompt] * batch_size
-    with autocast("cuda"):
-        return model(
-            _prompt,
-            height=height,
-            width=width,
-            generator=generator,
-            num_inference_steps=num_steps,
-        )["sample"]
+    output = model(
+        _prompt,
+        height=height,
+        width=width,
+        generator=generator,
+        num_inference_steps=num_steps,
+    )
+    return _retrieve_images(model, output)
 
 
 def _create_batchsizes(num_images, batch_size):
@@ -45,11 +64,18 @@ def infer_prompt(
     num_steps=51,
     seed=420,
 ):
-    pipe = StableDiffusionPipeline.from_pretrained(
+    pipe = AutoPipelineForText2Image.from_pretrained(
         model_path,
-        revision="fp16",
+        variant="fp16",
         torch_dtype=torch.float16,
+        use_safetensors=True,
     )
+    if not _is_pipeline_supported(pipe):
+        raise ValueError(
+            "Unsupported pipeline, please use one of the following pipelines: %s"
+            % ", ".join(SUPPORTED_PIPELINES)
+        )
+    print("Using pipeline", pipe)
     generator = torch.cuda.manual_seed(seed)
     pipe = pipe.to("cuda")
 
@@ -66,4 +92,5 @@ def infer_prompt(
                 num_steps=num_steps,
             )
         )
+        print("Finished batch of images")
     return all_images

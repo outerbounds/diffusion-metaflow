@@ -1,0 +1,26 @@
+model_config:
+  model_store:
+    pretrained_model_path: ./models
+    force_upload: false
+    s3_prefix: models/diffusion-models/
+    model_version: stable-diffusion-xl-base-1.0.1
+  model_name: stable-diffusion-xl-base-1.0.1
+inference_config:
+  batch_size: 1
+  height: 512
+  width: 512
+  num_steps: 50
+style_prompt_config:
+  styles:
+  - van gogh
+  - salvador dali
+  - warhol
+  - Art Nouveau
+  - Ansel Adams
+  - basquiat
+  subjects:
+  - mahatma gandhi
+  - dalai lama
+  - alan turing
+  num_images: 10
+seed: 42

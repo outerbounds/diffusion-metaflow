@@ -26,11 +26,9 @@ def create_image_grid(
     height=150,
     randomly_selected=False,
 ):
-
     selected_values = []
 
     for val in run_metadata:
-
         if prompt is not None:
             if prompt.lower() in val["prompt"].lower():
                 selected_values.append(val)
