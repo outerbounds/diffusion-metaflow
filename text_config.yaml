@@ -1,0 +1,21 @@
+model_config:
+  model_store:
+    pretrained_model_path: ./models
+    force_upload: false
+    s3_prefix: models/diffusion-models/
+    model_version: stable-diffusion-xl-base-1.0.1
+  model_name: stable-diffusion-xl-base-1.0
+inference_config:
+  batch_size: 1
+  height: 512
+  width: 512
+prompt_config:
+  prompts:
+  - Astronaut in on the amazon jungle petting a tiger, 8k very detailed and realistic,
+    cinematic lighting, highly detailed, digital painting, artstation, concept art,
+    smooth, sharp focus, illustration
+  - spungebob squarepants building machine learning models at NASA, 8k very detailed
+    and realistic, cinematic lighting, highly detailed, digital painting, artstation,
+    concept art, smooth, sharp focus, illustration, animated
+  num_images: 10
+  seed: 42
