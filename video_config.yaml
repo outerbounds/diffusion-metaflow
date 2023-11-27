@@ -11,7 +11,6 @@ video:
     decoding_timesteps: 14
     num_steps: 50
     num_frames: 50
-    seed: 42
   seed: 42
 image:
   model_config:
@@ -36,4 +35,3 @@ image:
       concept art, smooth, sharp focus, illustration, animated
     num_images: 10
   seed: 42
-seed: 42

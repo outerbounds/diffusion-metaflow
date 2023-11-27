@@ -77,8 +77,6 @@ class VideoGenerationConfig:
     num_steps: int = 50
     # number of frames to generate
     num_frames: int = 50
-    # Seed for the random number generator
-    seed: int = 42
 
 
 @dataclass
@@ -123,13 +121,14 @@ class ImageToVideoDiffusionConfig:
 
 @dataclass
 class TextToVideoDiffusionConfig:
+    # NO seed set in this objects as the seed is set in the
+    # sub objects
     video: ImageToVideoDiffusionConfig = field(
         default_factory=ImageToVideoDiffusionConfig
     )
     image: TextToImageDiffusionConfig = field(
         default_factory=TextToImageDiffusionConfig
     )
-    seed: int = 42
 
 
 def create_config(filepath, _class):
