@@ -5,6 +5,7 @@ from diffusers import AutoPipelineForText2Image
 
 SD_XL_BASE = "stable-diffusion-xl-base-1.0"
 
+
 def generate_images(
     model,
     prompt,
@@ -24,7 +25,7 @@ def generate_images(
     )
     if model.__class__.__name__ == "StableDiffusionXLPipeline":
         print("returns SDXL Image pipeline output")
-        return output.images # List[PIL.Image]
+        return output.images  # List[PIL.Image]
     return output["sample"]
 
 

@@ -4,57 +4,20 @@ import tempfile
 import uuid
 from metaflow import FlowSpec, step, Parameter, batch, card, current, kubernetes
 from metaflow.cards import Image, Markdown, Table, get_cards
-from metaflow.metaflow_config import DATASTORE_SYSROOT_S3
 from metaflow.metaflow_config import UI_URL
 
-from base import DIFF_USERS_IMAGE, ModelOperations, TextToImageDiffusion
+from base import DIFF_USERS_IMAGE, ArtifactStore, TextToImageDiffusion
+from config_base import ConfigBase
+from model_store import ModelStore
+from config import ImageStylePromptDiffusionConfig
 
-DEFAULT_STYLES = ",".join(
-    [
-        "van gogh",
-        "salvador dali",
-        "warhol",
-        "Art Nouveau",
-        "Ansel Adams",
-        "basquiat",
-    ]
-)
-
-DEFAULT_PROMPT = [
-    "Elon Musk",
-    # "dalai lama",
-    # "alan turing",
-]
-
-from utils import create_chunk_ranges, create_prompt, create_card_index
+from utils import create_chunk_ranges, create_prompt, create_card_index, unit_convert
 
 
-class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
+class DynamicPromptsToImages(FlowSpec, ConfigBase, ArtifactStore, TextToImageDiffusion):
     """
     Create multiple prompts in different styles using Stable Diffusion
     """
-
-    subjects = Parameter(
-        "subject",
-        type=str,
-        default=DEFAULT_PROMPT,
-        multiple=True,
-        help="The subject based on which images are generated",
-    )
-
-    styles = Parameter(
-        "styles",
-        type=str,
-        default=DEFAULT_STYLES,
-        help="Comma seperated list of styles",
-    )
-
-    num_images = Parameter(
-        "num-images",
-        type=int,
-        default=10,
-        help="Number of images to create per (prompt, style)",
-    )
 
     images_per_card = Parameter(
         "images-per-card",
@@ -70,7 +33,18 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
         help="Url to the Metaflow UI. If provided then an index card is created for the `join_styles` @step",
     )
 
-    seed = Parameter("seed", default=42, type=int, help="Seed to use for inference.")
+    _CORE_CONFIG_CLASS = ImageStylePromptDiffusionConfig
+
+    @property
+    def config(self) -> ImageStylePromptDiffusionConfig:
+        return self._get_config()
+
+    def _get_model_store(self):
+        return ModelStore.from_config(self.config.model_config.model_store)
+
+    @property
+    def model_version(self):
+        return self.config.model_config.model_store.model_version
 
     @staticmethod
     def create_image_id():
@@ -80,12 +54,16 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
     def start(self):
         import random
 
-        styles = self.styles.split(",")
         # Upload the model if it is not present.
-        self.upload_model_if_none_exists()
+        store_config = self.config.model_config.model_store
+        model_store = self._get_model_store()
+        # Upload the model if it is not present.
+        model_store.upload_model_if_none_exists(store_config)
 
+        _seed = self.config.seed
+        styles = self.config.style_prompt_config.styles
         # create seed values for each inference step . Since we are parallelizing over styles we will create the same number
-        random.seed(self.seed)
+        random.seed(_seed)
         self.style_rand_seeds = list(
             zip([random.randint(1, 10**7) for i in range(len(styles))], styles)
         )
@@ -94,26 +72,35 @@ class DynamicPromptsToImages(FlowSpec, ModelOperations, TextToImageDiffusion):
         self.next(self.generate_images, foreach="style_rand_seeds")
 
     @card
-    @kubernetes(image=DIFF_USERS_IMAGE, gpu=1, cpu=4, memory=16000)
+    @kubernetes(
+        image=DIFF_USERS_IMAGE,
+        gpu=1,
+        cpu=4,
+        memory=16000,
+        disk=unit_convert(100, "GB", "MB"),
+    )
     @step
     def generate_images(self):
         import itertools
 
         self.inference_seed, self.inference_style = self.input
         # Merge the prompts and style created in the foreach
-        self.prompt_combo = list(
-            itertools.product(self.subjects, [self.inference_style])
-        )
+        subjects = self.config.style_prompt_config.subjects
+        self.prompt_combo = list(itertools.product(subjects, [self.inference_style]))
         self.prompts = [create_prompt(p, s) for p, s in self.prompt_combo]
 
         # Download the model, run the model on the prompt and save the image given by the model.
-        with tempfile.TemporaryDirectory(self.model_version) as _dir:
-            self.download_model(folder=_dir)
+        with tempfile.TemporaryDirectory() as _dir:
+            self._get_model_store().download(self.model_version, _dir)
             idx = 0
             prompt_idx = 0
             self.image_index = []
             for images, _ in self.infer_prompt(
-                self.prompts, _dir, self.num_images, self.inference_seed
+                _dir,
+                self.inference_seed,
+                self.prompts,
+                self.config.style_prompt_config.num_images,
+                self.config.inference_config,
             ):
                 idx += len(images)
                 _prmt, _style = self.prompt_combo[prompt_idx]
