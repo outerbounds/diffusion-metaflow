@@ -5,7 +5,7 @@ video:
       force_upload: false
       s3_prefix: models/diffusion-models/
       model_version: stable-video-diffusion-img2vid
-    model_name: svd
+    model_name: stable-video-diffusion-img2vid
   inference_config:
     frame_rate: 10
     decoding_timesteps: 2
