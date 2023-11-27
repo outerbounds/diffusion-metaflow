@@ -4,6 +4,23 @@ import torch
 from diffusers import AutoPipelineForText2Image
 
 SD_XL_BASE = "stable-diffusion-xl-base-1.0"
+SUPPORTED_PIPELINES = ["StableDiffusionXLPipeline", "StableDiffusionPipeline"]
+
+
+def _is_pipeline_supported(pipe):
+    return pipe.__class__.__name__ in SUPPORTED_PIPELINES
+
+
+def _retrieve_images(pipe, pipe_output):
+    if pipe.__class__.__name__ == "StableDiffusionXLPipeline":
+        return pipe_output.images
+    elif pipe.__class__.__name__ == "StableDiffusionPipeline":
+        return pipe_output["sample"]
+    else:
+        raise ValueError(
+            "Unsupported pipeline, please use one of the following pipelines: %s"
+            % ", ".join(SUPPORTED_PIPELINES)
+        )
 
 
 def generate_images(
@@ -23,10 +40,7 @@ def generate_images(
         generator=generator,
         num_inference_steps=num_steps,
     )
-    if model.__class__.__name__ == "StableDiffusionXLPipeline":
-        print("returns SDXL Image pipeline output")
-        return output.images  # List[PIL.Image]
-    return output["sample"]
+    return _retrieve_images(model, output)
 
 
 def _create_batchsizes(num_images, batch_size):
@@ -56,6 +70,11 @@ def infer_prompt(
         torch_dtype=torch.float16,
         use_safetensors=True,
     )
+    if not _is_pipeline_supported(pipe):
+        raise ValueError(
+            "Unsupported pipeline, please use one of the following pipelines: %s"
+            % ", ".join(SUPPORTED_PIPELINES)
+        )
     print("Using pipeline", pipe)
     generator = torch.cuda.manual_seed(seed)
     pipe = pipe.to("cuda")

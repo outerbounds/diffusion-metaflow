@@ -76,7 +76,7 @@ class DynamicPromptsToImages(FlowSpec, ConfigBase, ArtifactStore, TextToImageDif
         image=DIFF_USERS_IMAGE,
         gpu=1,
         cpu=4,
-        memory=16000,
+        memory=20000,
         disk=unit_convert(100, "GB", "MB"),
     )
     @step
@@ -104,7 +104,7 @@ class DynamicPromptsToImages(FlowSpec, ConfigBase, ArtifactStore, TextToImageDif
             ):
                 idx += len(images)
                 _prmt, _style = self.prompt_combo[prompt_idx]
-
+                print("Saving the Images")
                 for i in images:
                     art_name = self.create_image_id()
                     # `save_artifact` will save images to the `self`.
