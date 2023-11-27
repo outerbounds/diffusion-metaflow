@@ -24,7 +24,7 @@ class ConfigBase:
     This class is meant for reuse in Metaflow flows which want to resue the configuration parameters of this training flow so
     that they can call downstream flows with the same configuration parameters.
 
-    Example:
+    Example Usecases:
     --------
     - Upstream flow which is preparing data is inheriting the configuration schema / parameters from this class
     - This way correct configuration parsed in both flows while we can also pass the configuration from the upstream flow to the downstream flow while ensuring that the configuration is valid.
@@ -34,6 +34,8 @@ class ConfigBase:
     This way we will be able to access the config directly.
     The `_CORE_CONFIG_CLASS` property of this class should be set to the class which will be used to parse the configuration.
 
+    Usage Example:
+    --------
     ```
     _CORE_CONFIG_CLASS = ImageStylePromptDiffusionConfig
     @property

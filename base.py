@@ -37,13 +37,7 @@ class ArtifactStore:
 class TextToImageDiffusion:
     """
     ## TextToImageDiffusion
-    This is a wrapper over `diffusers` library. It exposes `metaflow.Parameter`'s neccessary for calling stable diffusion library.
-
-    ### Parameters
-        - `batch_size` : controls the number of images to send to the GPU per batch
-        - `output_width` : width of the output image
-        - `output_height` : width of the input image
-        - `num_steps` : number of steps to run the reverse diffusion process.
+    This is a wrapper over `diffusers` library.
     """
 
     def infer_prompt(
