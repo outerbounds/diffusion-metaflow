@@ -77,6 +77,10 @@ class VideoGenerationConfig:
     num_steps: int = 50
     # number of frames to generate
     num_frames: int = 50
+    # motion bucket id
+    motion_bucket_id: int = 127
+    # low vram mode / Runs with half the model weights
+    low_vram_mode: bool = False
 
 
 @dataclass

@@ -14,7 +14,7 @@ from metaflow import (
 from metaflow.cards import Image, Markdown
 from model_store import ModelStore
 from config import TextToVideoDiffusionConfig
-
+import shutil
 from base import DIFF_USERS_IMAGE, ArtifactStore, SGM_BASE_IMAGE, TextToImageDiffusion
 from config_base import ConfigBase
 from utils import unit_convert
@@ -54,6 +54,24 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
             store = ModelStore.from_path(os.path.join(current.pathspec))
             store.upload(_dir, "images")
             return store.root
+
+    def save_image_and_video(self, image_bytes, video_bytes):
+        """
+        Save the image and video to the datastore.
+        """
+        from metaflow import current
+        import uuid
+
+        unique_id = uuid.uuid4().hex[:7]
+        store_path = os.path.join(current.pathspec, "final_render")
+        with tempfile.TemporaryDirectory() as _dir:
+            with open(os.path.join(_dir, "image.png"), "wb") as f:
+                f.write(image_bytes)
+            with open(os.path.join(_dir, "video.mp4"), "wb") as f:
+                f.write(video_bytes)
+            store = ModelStore.from_path(store_path)
+            store.upload(_dir, unique_id)
+            return os.path.join(store.root, unique_id)
 
     @property
     def config(self) -> TextToVideoDiffusionConfig:
@@ -112,10 +130,42 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
         )
         self.next(self.generate_video_from_images)
 
+    @kubernetes(
+        image=SGM_BASE_IMAGE,
+        gpu=1,
+        cpu=4,
+        memory=16000,
+        disk=unit_convert(100, "GB", "MB"),
+    )
     @step
     def generate_video_from_images(self):
+        from video_diffusion import ImageToVideo
+
         # Based on how StabilityAI has devised the code, We will HAVETO
         # download the model to a folder called checkpoints.
+        print("Downloading Video Model")
+        model_store = self._get_video_model_store()
+        os.makedirs("./checkpoints", exist_ok=True)
+        model_store.download(self.video_model_version, "./checkpoints")
+        print("Generating Videos")
+        self.videos_save_path = []
+        with tempfile.TemporaryDirectory() as _dir:
+            image_store = ModelStore(self.stored_images_root)
+            image_store.download("images", _dir)
+            image_paths = [os.path.join(_dir, f) for f in os.listdir(_dir) if ".png" in f]
+            _args = [
+                self.video_model_version,
+                image_paths,
+                self.config.video.inference_config,
+                self.config.video.seed,
+            ]
+            for image_bytes, video_bytes in ImageToVideo.generate(*_args):
+                print("Saving Video")
+                save_path = self.save_image_and_video(image_bytes, video_bytes)
+                print("Video Saved To Path %s" % save_path)
+                self.videos_save_path.append(save_path)
+
+        shutil.rmtree("./checkpoints")
         self.next(self.end)
 
     @step

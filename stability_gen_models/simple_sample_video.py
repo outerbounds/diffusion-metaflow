@@ -16,7 +16,7 @@ from torch import Tensor
 
 CURRENT_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-from sgm_util import default, instantiate_from_config
+from .sgm_util import default, instantiate_from_config
 
 
 def load_model_fully(model_name, num_frames, num_steps, device):
@@ -27,7 +27,12 @@ def load_model_fully(model_name, num_frames, num_steps, device):
         model_config = os.path.join(CURRENT_FILE_DIR, "configs", "svd_xt.yaml")
         num_frames = default(num_frames, 25)
     else:
-        raise ValueError(f"Version {model_name} does not exist.")
+        supported_version = ", ".join(
+            ["stable-video-diffusion-img2vid", "stable-video-diffusion-img2vid-xt"]
+        )
+        raise ValueError(
+            f"Version {model_name} does not exist. Supported versions: {supported_version}"
+        )
 
     num_steps = default(num_steps, 30)
     model = load_model(
@@ -111,7 +116,7 @@ def _get_image_tensor_and_model_inputs(
 ):
     image = _image_to_tensor(input_img_path)
     image = image.unsqueeze(0).to(device)
-    _inference_validation_and_warnings(image, motion_bucket_id, fps_id, num_frames)
+    _inference_validation_and_warnings(image, motion_bucket_id, fps_id)
 
     value_dict = {}
     value_dict["motion_bucket_id"] = motion_bucket_id
@@ -193,6 +198,7 @@ def _make_video_for_one_image(
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         writer.write(frame)
     writer.release()
+    return video_path
 
 
 def sample(
@@ -206,6 +212,7 @@ def sample(
     seed: int = 23,
     decoding_t: int = 14,  # Number of frames decoded at a time! This eats most VRAM. Reduce if necessary.
     device: str = "cuda",
+    low_vram_mode: bool = False,
     output_folder: Optional[str] = None,
 ):
     """
@@ -213,22 +220,24 @@ def sample(
     image file in folder `input_path`. If you run out of VRAM, try decreasing `decoding_t`.
     """
     model = load_model_fully(version, num_frames, num_steps, device)
+    if low_vram_mode:
+        print("setting low vram mode")
+        model.model.half()
+    if torch.cuda.is_available():
+        print("using cuda")
+        model.cuda()
     torch.manual_seed(seed)
 
     all_img_paths = load_image_paths(input_path)
 
+    video_paths = []
     for input_img_path in all_img_paths:
-        image = _image_to_tensor(input_img_path)
-        image = image.unsqueeze(0).to(device)
-        _inference_validation_and_warnings(image, motion_bucket_id, fps_id)
-
         image, value_dict = _get_image_tensor_and_model_inputs(
             input_img_path, motion_bucket_id, fps_id, cond_aug, num_frames, device
         )
-
         with torch.no_grad():
             with torch.autocast(device):
-                _make_video_for_one_image(
+                video_path = _make_video_for_one_image(
                     model,
                     image,
                     value_dict,
@@ -237,6 +246,9 @@ def sample(
                     device,
                     output_folder,
                 )
+        video_paths.append(video_path)
+        del image
+    return video_paths
 
 
 def get_unique_embedder_keys_from_conditioner(conditioner):
@@ -300,11 +312,12 @@ def load_model(
     config.model.params.sampler_config.params.guider_config.params.num_frames = (
         num_frames
     )
-    if device == "cuda":
-        with torch.device(device):
-            model = instantiate_from_config(config.model).to(device).eval()
-    else:
-        model = instantiate_from_config(config.model).to(device).eval()
+    model = instantiate_from_config(config.model)
+    # if device == "cuda":
+    #     with torch.device(device):
+    #         # .to(device).eval()
+    # else:
+    #     model = instantiate_from_config(config.model).to(device).eval()
 
     return model
 

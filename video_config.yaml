@@ -11,7 +11,9 @@ video:
     decoding_timesteps: 2
     num_steps: 50
     num_frames: 50
-  seed: 42
+    motion_bucket_id: 125
+    low_vram_mode: true
+  seed: 422
 image:
   model_config:
     model_store:
@@ -23,7 +25,7 @@ image:
   inference_config:
     batch_size: 2
     height: 512
-    width: 512
+    width: 768
     num_steps: 25
   prompt_config:
     prompts:
@@ -31,4 +33,4 @@ image:
       cinematic lighting, highly detailed, digital painting, artstation, concept art,
       smooth, sharp focus, illustration
     num_images: 3
-  seed: 42
+  seed: 422

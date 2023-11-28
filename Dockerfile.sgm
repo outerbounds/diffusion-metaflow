@@ -1,2 +1,3 @@
 FROM valayob/sdvideo-base:1.1
+RUN pip install pytorch_lightning==2.1.0 kornia==0.6.9 open-clip-torch==2.23.0 xformers==v0.0.22.post4
 RUN git clone https://github.com/Stability-AI/generative-models.git /deps/sgm-models && cd /deps/sgm-models && python -m pip install .

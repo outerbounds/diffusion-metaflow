@@ -7,7 +7,7 @@ import tempfile
 from config import ImageInferenceConfig
 
 DIFF_USERS_IMAGE = "valayob/sdvideo-base:1.1"
-SGM_BASE_IMAGE = "valayob/sdvideo-sgm:1.0"
+SGM_BASE_IMAGE = "valayob/sdvideo-sgm:1.5"
 
 
 def safe_mkdirs(_dir):
