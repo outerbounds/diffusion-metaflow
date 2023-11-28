@@ -16,6 +16,7 @@ from model_store import ModelStore
 from config import TextToVideoDiffusionConfig
 import shutil
 from base import DIFF_USERS_IMAGE, ArtifactStore, SGM_BASE_IMAGE, TextToImageDiffusion
+from custom_decorators import gpu_profile, pip
 from config_base import ConfigBase
 from utils import unit_convert
 
@@ -81,12 +82,15 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
     def start(self):
         self.next(self.upload_models)
 
+    @pip(libraries={"omegaconf": "2.3.0"})
+    @card(type="blank")
     @step
     def upload_models(self):
         """
         Upload the Image and Video Models to
         the datastore if they don't exist
         """
+        current.card.extend(self.config_report())
         store_configs = [
             self.config.image.model_config.model_store,
             self.config.video.model_config.model_store,
@@ -103,6 +107,7 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
         )
         self.next(self.generate_images)
 
+    @gpu_profile(artifact_prefix="image_gpu_profile")
     @kubernetes(
         image=DIFF_USERS_IMAGE,
         gpu=1,
@@ -137,6 +142,8 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
         memory=16000,
         disk=unit_convert(100, "GB", "MB"),
     )
+    @gpu_profile(artifact_prefix="video_gpu_profile")
+    @card
     @step
     def generate_video_from_images(self):
         from video_diffusion import ImageToVideo
@@ -152,7 +159,9 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
         with tempfile.TemporaryDirectory() as _dir:
             image_store = ModelStore(self.stored_images_root)
             image_store.download("images", _dir)
-            image_paths = [os.path.join(_dir, f) for f in os.listdir(_dir) if ".png" in f]
+            image_paths = [
+                os.path.join(_dir, f) for f in os.listdir(_dir) if ".png" in f
+            ]
             _args = [
                 self.video_model_version,
                 image_paths,

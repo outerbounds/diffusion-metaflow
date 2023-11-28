@@ -46,6 +46,7 @@ model:
             open_clip_embedding_config:
               target: sgm.modules.encoders.modules.FrozenOpenCLIPImageEmbedder
               params:
+                # TODO : add a way to avoid download the clip weights.
                 freeze: True
 
         - input_key: fps_id

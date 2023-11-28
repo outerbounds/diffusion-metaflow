@@ -12,7 +12,7 @@ from einops import rearrange, repeat
 from fire import Fire
 from omegaconf import OmegaConf
 from PIL import Image
-from torchvision.transforms import ToTensor
+from torchvision.transforms import ToTensor, functional as TF
 from torch import Tensor
 
 CURRENT_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -49,7 +49,11 @@ def _image_to_tensor(input_img_path):
     with Image.open(input_img_path) as image:
         if image.mode == "RGBA":
             image = image.convert("RGB")
-        w, h = image.size
+        if image.size != (1024, 576):
+            print(f"Resizing {image.size} to (1024, 576)")
+            image = TF.resize(TF.resize(image, 1024), (576, 1024))
+
+        w, h = 1024, 576
 
         if h % 64 != 0 or w % 64 != 0:
             width, height = map(lambda x: x - x % 64, (w, h))
@@ -121,6 +125,7 @@ def _make_video_for_one_image(
     device: str,
     output_folder: str,
 ):
+    model.conditioner.to(device)
     batch, batch_uc = get_batch(
         get_unique_embedder_keys_from_conditioner(model.conditioner),
         value_dict,
@@ -137,13 +142,22 @@ def _make_video_for_one_image(
         ],
     )
 
+    model.conditioner.cpu()
+    torch.cuda.empty_cache()
+
+    # from here, dtype is fp16
     for k in ["crossattn", "concat"]:
         uc[k] = repeat(uc[k], "b ... -> b t ...", t=num_frames)
         uc[k] = rearrange(uc[k], "b t ... -> (b t) ...", t=num_frames)
         c[k] = repeat(c[k], "b ... -> b t ...", t=num_frames)
         c[k] = rearrange(c[k], "b t ... -> (b t) ...", t=num_frames)
+    for k in uc.keys():
+        uc[k] = uc[k].to(dtype=torch.float16)
+        c[k] = c[k].to(dtype=torch.float16)
 
-    randn = torch.randn(_get_shape(image, num_frames), device=device)
+    randn = torch.randn(
+        _get_shape(image, num_frames), device=device, dtype=torch.float16
+    )
 
     additional_model_inputs = {}
     additional_model_inputs["image_only_indicator"] = torch.zeros(2, num_frames).to(
@@ -151,13 +165,22 @@ def _make_video_for_one_image(
     )
     additional_model_inputs["num_video_frames"] = batch["num_video_frames"]
 
+    for k in additional_model_inputs:
+        if isinstance(additional_model_inputs[k], torch.Tensor):
+            additional_model_inputs[k] = additional_model_inputs[k].to(
+                dtype=torch.float16
+            )
+
     def denoiser(input, sigma, c):
         return model.denoiser(model.model, input, sigma, c, **additional_model_inputs)
 
     samples_z = model.sampler(denoiser, randn, cond=c, uc=uc)
     model.en_and_decode_n_samples_a_time = decoding_t
+    model.first_stage_model.to(device)
     samples_x = model.decode_first_stage(samples_z)
     samples = torch.clamp((samples_x + 1.0) / 2.0, min=0.0, max=1.0)
+    model.first_stage_model.cpu()
+    torch.cuda.empty_cache()
 
     os.makedirs(output_folder, exist_ok=True)
     base_count = len(glob(os.path.join(output_folder, "*.mp4")))
@@ -177,6 +200,16 @@ def _make_video_for_one_image(
         writer.write(frame)
     writer.release()
     return video_path
+
+
+def _low_vram_mode(model):
+    # move models expect unet to cpu
+    model.conditioner.cpu()
+    model.first_stage_model.cpu()
+    # change the dtype of unet
+    model.model.to(dtype=torch.float16)
+    torch.cuda.empty_cache()
+    model = model.requires_grad_(False)
 
 
 def sample(
@@ -201,7 +234,7 @@ def sample(
     model = load_model_fully(version, num_frames, num_steps, device)
     if low_vram_mode:
         print("setting low vram mode")
-        model.model.half()
+        _low_vram_mode(model)
     if torch.cuda.is_available():
         print("using cuda")
         model.cuda()

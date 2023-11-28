@@ -8,13 +8,13 @@ video:
     model_name: stable-video-diffusion-img2vid
   inference_config:
     # Numbers provided here are for Tesla V100 16GB GPUs. Adjust accordingly.
-    frame_rate: 3 # Affects GPU VRAM usage
+    frame_rate: 8 # Affects GPU VRAM usage
     decoding_timesteps: 1 # Affects GPU VRAM usage
     num_steps: 25
-    num_frames: 20 # Affects GPU VRAM usage
+    num_frames: 30 # Affects GPU VRAM usage
     motion_bucket_id: 125
     low_vram_mode: true # Affects GPU VRAM usage
-  seed: 422
+  seed: 321
 image:
   model_config:
     model_store:
@@ -25,13 +25,22 @@ image:
     model_name: stable-diffusion-xl-base-1.0.1
   inference_config:
     batch_size: 2
-    height: 512
-    width: 768
+    height: 576
+    width: 1024
     num_steps: 25
   prompt_config:
     prompts:
     - Astronaut in on the amazon jungle petting a tiger, 8k very detailed and realistic,
       cinematic lighting, highly detailed, digital painting, artstation, concept art,
       smooth, sharp focus, illustration
+    - there are many sailboats in the water near a very tall cloud, dramatic concept art,
+      towering waves, surreal concept art, noah bradley concept art, inspired by RHADS,
+      high resolution concept art, inspired by Noah Bradley, concept art illustration,
+      concept art | rhads, epic digital concept art, concept arts, concept art,
+      inspired by jessica rossier, concept art
+    - A retro vintage Comic style poster, of a post apocalyptic universe, of a muscle car,
+      extreme color scheme, action themed, driving on a desert road wasteland, fleeting,
+      chased by a giant fire breathing serpent like fantasy creature, in action pose,
+      highly detailed digital art, jim lee
     num_images: 4
   seed: 422

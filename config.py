@@ -1,11 +1,5 @@
 from typing import Union, Optional, List, Any
 from dataclasses import dataclass, field
-import omegaconf
-
-try:
-    from omegaconf import MISSING
-except ImportError:
-    MISSING: Any = "???"
 
 
 MODELS_BASE_S3_PATH = "models/diffusion-models/"
