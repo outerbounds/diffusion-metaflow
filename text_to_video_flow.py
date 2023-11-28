@@ -115,7 +115,8 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
         memory=16000,
         disk=unit_convert(100, "GB", "MB"),
     )
-    @card
+    @pip(libraries={"accelerate": "0.24.1"})
+    @card(customize=True)
     @step
     def generate_images(self):
         model_store = self._get_image_model_store()
@@ -130,6 +131,11 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
                 prompt_config.num_images,
                 self.config.image.inference_config,
             )
+            for images, prompt in image_prompts:
+                current.card.extend(
+                    [Markdown("## Prompt : %s" % prompt)]
+                    + [Image.from_pil_image(i) for i in images]
+                )
         self.stored_images_root = self._upload_images_and_prompts_to_data_store(
             image_prompts
         )
@@ -143,6 +149,7 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
         disk=unit_convert(100, "GB", "MB"),
     )
     @gpu_profile(artifact_prefix="video_gpu_profile")
+    @pip(libraries={"accelerate": "0.24.1"})
     @card
     @step
     def generate_video_from_images(self):

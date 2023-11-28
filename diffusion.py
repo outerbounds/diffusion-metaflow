@@ -72,7 +72,7 @@ def _create_batchsizes(num_images, batch_size):
 
 def infer_prompt(
     model_path,
-    prompt,
+    prompts,
     num_images=3,
     batch_size=3,
     width=512,
@@ -94,11 +94,11 @@ def infer_prompt(
     print("Using pipeline", pipe)
     generator = torch.cuda.manual_seed(seed)
     pipe = pipe.to("cuda")
-
     all_images = []
-    for _batch_size in _create_batchsizes(num_images, batch_size):
-        all_images.extend(
-            generate_images(
+    for prompt in prompts:
+        prompt_images = []
+        for _batch_size in _create_batchsizes(num_images, batch_size):
+            generated_images = generate_images(
                 pipe,
                 prompt,
                 _batch_size,
@@ -107,6 +107,7 @@ def infer_prompt(
                 generator=generator,
                 num_steps=num_steps,
             )
-        )
+            prompt_images.extend(generated_images)
+        all_images.append((prompt_images, prompt))
         print("Finished batch of images")
     return all_images
