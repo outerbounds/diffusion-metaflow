@@ -8,6 +8,10 @@ import shutil
 
 class ModelStore:
     @classmethod
+    def from_path(cls, base_prefix):
+        return cls(os.path.join(DATATOOLS_S3ROOT, base_prefix))
+
+    @classmethod
     def from_config(cls, config: ModelStoreConfig):
         return cls(os.path.join(DATATOOLS_S3ROOT, config.s3_prefix))
 

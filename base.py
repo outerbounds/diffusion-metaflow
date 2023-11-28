@@ -7,6 +7,7 @@ import tempfile
 from config import ImageInferenceConfig
 
 DIFF_USERS_IMAGE = "valayob/sdvideo-base:1.1"
+SGM_BASE_IMAGE = "valayob/sdvideo-sgm:1.0"
 
 
 def safe_mkdirs(_dir):
@@ -40,8 +41,9 @@ class TextToImageDiffusion:
     This is a wrapper over `diffusers` library.
     """
 
+    @classmethod
     def infer_prompt(
-        self,
+        cls,
         model_path,
         seed,
         prompts,
