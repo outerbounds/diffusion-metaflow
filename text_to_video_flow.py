@@ -61,6 +61,8 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
 
     @step
     def generate_video_from_images(self):
+        # Based on how StabilityAI has devised the code, We will HAVETO
+        # download the model to a folder called checkpoints.
         self.next(self.end)
 
     @step
