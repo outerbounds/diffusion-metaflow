@@ -7,12 +7,13 @@ video:
       model_version: stable-video-diffusion-img2vid
     model_name: stable-video-diffusion-img2vid
   inference_config:
-    frame_rate: 10
-    decoding_timesteps: 2
-    num_steps: 50
-    num_frames: 50
+    # Numbers provided here are for Tesla V100 16GB GPUs. Adjust accordingly.
+    frame_rate: 3 # Affects GPU VRAM usage
+    decoding_timesteps: 1 # Affects GPU VRAM usage
+    num_steps: 25
+    num_frames: 20 # Affects GPU VRAM usage
     motion_bucket_id: 125
-    low_vram_mode: true
+    low_vram_mode: true # Affects GPU VRAM usage
   seed: 422
 image:
   model_config:
@@ -32,5 +33,5 @@ image:
     - Astronaut in on the amazon jungle petting a tiger, 8k very detailed and realistic,
       cinematic lighting, highly detailed, digital painting, artstation, concept art,
       smooth, sharp focus, illustration
-    num_images: 3
+    num_images: 4
   seed: 422

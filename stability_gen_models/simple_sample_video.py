@@ -4,6 +4,7 @@ from glob import glob
 from pathlib import Path
 from typing import Optional
 
+from typing import List
 import cv2
 import numpy as np
 import torch
@@ -42,29 +43,6 @@ def load_model_fully(model_name, num_frames, num_steps, device):
         num_steps,
     )
     return model
-
-
-def load_image_paths(input_path):
-    path = Path(input_path)
-    all_img_paths = []
-    if path.is_file():
-        if any([input_path.endswith(x) for x in ["jpg", "jpeg", "png"]]):
-            all_img_paths = [input_path]
-        else:
-            raise ValueError("Path is not valid image file.")
-    elif path.is_dir():
-        all_img_paths = sorted(
-            [
-                f
-                for f in path.iterdir()
-                if f.is_file() and f.suffix.lower() in [".jpg", ".jpeg", ".png"]
-            ]
-        )
-        if len(all_img_paths) == 0:
-            raise ValueError("Folder does not contain any images.")
-    else:
-        raise ValueError("Path is not valid image file or folder.")
-    return all_img_paths
 
 
 def _image_to_tensor(input_img_path):
@@ -186,7 +164,7 @@ def _make_video_for_one_image(
     video_path = os.path.join(output_folder, f"{base_count:06d}.mp4")
     writer = cv2.VideoWriter(
         video_path,
-        cv2.VideoWriter_fourcc(*"MP4V"),
+        cv2.VideoWriter_fourcc(*"mp4v"),
         value_dict["fps_id"] + 1,
         (samples.shape[-1], samples.shape[-2]),
     )
@@ -202,7 +180,7 @@ def _make_video_for_one_image(
 
 
 def sample(
-    input_path: str = "assets/test_image.png",  # Can either be image file or folder with image files
+    input_paths: List[str] = [],
     num_frames: Optional[int] = None,
     num_steps: Optional[int] = None,
     version: str = "svd",
@@ -219,6 +197,7 @@ def sample(
     Simple script to generate a single sample conditioned on an image `input_path` or multiple images, one for each
     image file in folder `input_path`. If you run out of VRAM, try decreasing `decoding_t`.
     """
+    print("Loading Model....", version)
     model = load_model_fully(version, num_frames, num_steps, device)
     if low_vram_mode:
         print("setting low vram mode")
@@ -227,14 +206,13 @@ def sample(
         print("using cuda")
         model.cuda()
     torch.manual_seed(seed)
-
-    all_img_paths = load_image_paths(input_path)
-
+    all_img_paths = input_paths
     video_paths = []
     for input_img_path in all_img_paths:
         image, value_dict = _get_image_tensor_and_model_inputs(
             input_img_path, motion_bucket_id, fps_id, cond_aug, num_frames, device
         )
+        print("Running inference for Image: ", input_img_path)
         with torch.no_grad():
             with torch.autocast(device):
                 video_path = _make_video_for_one_image(
@@ -313,12 +291,6 @@ def load_model(
         num_frames
     )
     model = instantiate_from_config(config.model)
-    # if device == "cuda":
-    #     with torch.device(device):
-    #         # .to(device).eval()
-    # else:
-    #     model = instantiate_from_config(config.model).to(device).eval()
-
     return model
 
 

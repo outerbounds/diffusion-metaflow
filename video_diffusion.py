@@ -33,22 +33,21 @@ class ImageToVideo:
         )
         import torch
 
-        for image_path in image_paths:
-            with tempfile.TemporaryDirectory() as _dir:
-                video_files = sample_images_to_video(
-                    input_path=image_path,
-                    num_frames=generation_config.num_frames,
-                    num_steps=generation_config.num_steps,
-                    version=model_version,
-                    fps_id=generation_config.frame_rate,
-                    motion_bucket_id=generation_config.motion_bucket_id,
-                    seed=seed,
-                    decoding_t=generation_config.decoding_timesteps,
-                    device="cuda" if torch.cuda.is_available() else "cpu",
-                    output_folder=_dir,
-                    low_vram_mode=generation_config.low_vram_mode,
-                )
-                video_file = video_files[0]
+        with tempfile.TemporaryDirectory() as _dir:
+            video_files = sample_images_to_video(
+                input_paths=image_paths,
+                num_frames=generation_config.num_frames,
+                num_steps=generation_config.num_steps,
+                version=model_version,
+                fps_id=generation_config.frame_rate,
+                motion_bucket_id=generation_config.motion_bucket_id,
+                seed=seed,
+                decoding_t=generation_config.decoding_timesteps,
+                device="cuda" if torch.cuda.is_available() else "cpu",
+                output_folder=_dir,
+                low_vram_mode=generation_config.low_vram_mode,
+            )
+            for video_file, image_path in zip(video_files, image_paths):
                 yield file_to_bytes(image_path), file_to_bytes(video_file)
 
 
