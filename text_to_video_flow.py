@@ -46,11 +46,14 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
 
         with tempfile.TemporaryDirectory() as _dir:
             for idx, tup in enumerate(image_prompts):
-                prompt, image = tup
-                image.save(os.path.join(_dir, f"{idx}.png"))
+                images, prompt = tup
+                for _i, image in enumerate(images):
+                    image.save(os.path.join(_dir, f"{idx}_{_i}.png"))
                 with open(os.path.join(_dir, f"{idx}.txt"), "w") as f:
                     f.write(prompt)
-            ModelStore.from_path(os.path.join(current.pathspec)).upload(_dir, "images")
+            store = ModelStore.from_path(os.path.join(current.pathspec))
+            store.upload(_dir, "images")
+            return store.root
 
     @property
     def config(self) -> TextToVideoDiffusionConfig:
@@ -104,7 +107,9 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
                 prompt_config.num_images,
                 self.config.image.inference_config,
             )
-        self._upload_images_and_prompts_to_data_store(image_prompts)
+        self.stored_images_root = self._upload_images_and_prompts_to_data_store(
+            image_prompts
+        )
         self.next(self.generate_video_from_images)
 
     @step

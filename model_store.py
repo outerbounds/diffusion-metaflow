@@ -19,6 +19,10 @@ class ModelStore:
         # model_store_root is a S3 path to where all files for the model will be loaded and saved
         self._model_store_root = model_store_root
 
+    @property
+    def root(self):
+        return self._model_store_root
+
     @staticmethod
     def _walk_directory(root):
         path_keys = []
