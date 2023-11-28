@@ -7,6 +7,9 @@ VIDEO_MODEL_ORG = "stabilityai"
 VIDEO_MODEL_NAME = "stable-video-diffusion-img2vid"
 VIDEO_MODEL_PATH = "./video-models"
 
+CLIP_MODEL_ORG = "laion"
+CLIP_MODEL_NAME = "CLIP-ViT-H-14-laion2B-s32B-b79K"
+CLIP_MODEL_PATH = "./video-models"
 
 def download_model(model_path=VIDEO_MODEL_PATH):
     from huggingface_hub import hf_hub_download
@@ -14,6 +17,13 @@ def download_model(model_path=VIDEO_MODEL_PATH):
     hf_hub_download(
         repo_id=f"{VIDEO_MODEL_ORG}/{VIDEO_MODEL_NAME}",
         filename="svd.safetensors",
+        local_dir=model_path,
+        local_dir_use_symlinks=False,
+    )
+
+    hf_hub_download(
+        repo_id=f"{CLIP_MODEL_ORG}/{CLIP_MODEL_NAME}",
+        filename="open_clip_pytorch_model.bin",
         local_dir=model_path,
         local_dir_use_symlinks=False,
     )
