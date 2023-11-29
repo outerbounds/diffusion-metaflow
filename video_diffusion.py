@@ -1,10 +1,9 @@
 import os
 import tempfile
 from typing import List
-from config import VideoGenerationConfig, VideoModelConfig
+from config import VideoGenerationConfig, VideoModelConfig, VIDEO_MODEL_NAME
 
 VIDEO_MODEL_ORG = "stabilityai"
-VIDEO_MODEL_NAME = "stable-video-diffusion-img2vid"
 VIDEO_MODEL_PATH = "./video-models"
 
 CLIP_MODEL_ORG = "laion"

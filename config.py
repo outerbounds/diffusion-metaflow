@@ -1,9 +1,11 @@
 from typing import Union, Optional, List, Any
 from dataclasses import dataclass, field
+from enum import Enum
 
+VIDEO_MODEL_NAME = "stable-video-diffusion-img2vid"
 
 MODELS_BASE_S3_PATH = "models/diffusion-models/"
-MODEL_VERSION = "stable-diffusion-xl-base-1.0.1"
+IMAGE_MODEL_NAME = "stable-diffusion-xl-base-1.0.1"
 MODEL_PATH = "./models"
 DEFAULT_STYLES = [
     "van gogh",
@@ -23,7 +25,6 @@ DEFAULT_PROMPS = [
     "Astronaut in on the amazon jungle petting a tiger, 8k very detailed and realistic, cinematic lighting, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration",
     "spungebob squarepants building machine learning models at NASA, 8k very detailed and realistic, cinematic lighting, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, animated",
 ]
-VIDEO_MODEL_NAME = "svd"
 
 
 @dataclass
@@ -35,7 +36,7 @@ class ModelStoreConfig:
     s3_prefix: str = (
         MODELS_BASE_S3_PATH  # prefix of the path where models are stored in S3.
     )
-    model_version: str = MODEL_VERSION  # A unique version for the model. It will be used to create a folder in the S3 bucket.
+    model_version: str = IMAGE_MODEL_NAME  # A unique version for the model. It will be used to create a folder in the S3 bucket.
 
 
 @dataclass
@@ -47,7 +48,7 @@ class VideoModelConfig:
 @dataclass
 class ImageModelConfig:
     model_store: ModelStoreConfig = field(default_factory=ModelStoreConfig)
-    model_name: str = MODEL_VERSION
+    model_name: str = IMAGE_MODEL_NAME
 
 
 @dataclass
