@@ -5,3 +5,4 @@ __pycache__
 *.log
 *.sh
 video-models/
+final_render/

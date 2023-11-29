@@ -8,13 +8,13 @@ video:
     model_name: stable-video-diffusion-img2vid
   inference_config:
     # Numbers provided here are for Tesla V100 16GB GPUs. Adjust accordingly.
-    frame_rate: 8 # Affects GPU VRAM usage
+    frame_rate: 6 # Affects GPU VRAM usage
     decoding_timesteps: 1 # Affects GPU VRAM usage
     num_steps: 25
-    num_frames: 30 # Affects GPU VRAM usage
+    num_frames: 10 # Affects GPU VRAM usage
     motion_bucket_id: 125
     low_vram_mode: true # Affects GPU VRAM usage
-  seed: 321
+  seed: 1232
 image:
   model_config:
     model_store:
@@ -40,7 +40,7 @@ image:
       inspired by jessica rossier, concept art
     - A retro vintage Comic style poster, of a post apocalyptic universe, of a muscle car,
       extreme color scheme, action themed, driving on a desert road wasteland, fleeting,
-      chased by a giant fire breathing serpent like fantasy creature, in action pose,
-      highly detailed digital art, jim lee
+      chased by a giant fire breathing dragon like fantasy creature, in action pose,
+      highly detailed digital art, jim lee. main actor wearing sun glasses.
     num_images: 4
-  seed: 422
+  seed: 124212

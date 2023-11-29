@@ -3,6 +3,7 @@ model:
   params:
     scale_factor: 0.18215
     disable_first_stage_autocast: True
+    # STABILITY AI : WHY YOU DO THIS! Hardcoding tensor paths is not cool.
     ckpt_path: checkpoints/svd.safetensors
 
     denoiser_config:
@@ -47,6 +48,7 @@ model:
               target: sgm.modules.encoders.modules.FrozenOpenCLIPImageEmbedder
               params:
                 # TODO : add a way to avoid download the clip weights.
+                version: checkpoints/open_clip_pytorch_model.bin
                 freeze: True
 
         - input_key: fps_id

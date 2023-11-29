@@ -11,9 +11,13 @@ CLIP_MODEL_ORG = "laion"
 CLIP_MODEL_NAME = "CLIP-ViT-H-14-laion2B-s32B-b79K"
 CLIP_MODEL_PATH = "./video-models"
 
+
 def download_model(model_path=VIDEO_MODEL_PATH):
     from huggingface_hub import hf_hub_download
+    from huggingface_hub import logging
 
+    logging.set_verbosity_debug()
+    print("logging set to debug. Now downloading models")
     hf_hub_download(
         repo_id=f"{VIDEO_MODEL_ORG}/{VIDEO_MODEL_NAME}",
         filename="svd.safetensors",
@@ -45,7 +49,7 @@ class ImageToVideo:
 
         with tempfile.TemporaryDirectory() as _dir:
             video_files = sample_images_to_video(
-                input_paths=image_paths,
+                input_paths=image_paths[:1],
                 num_frames=generation_config.num_frames,
                 num_steps=generation_config.num_steps,
                 version=model_version,
