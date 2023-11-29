@@ -31,7 +31,6 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
     fully_random = Parameter(
         "fully-random",
         default=False,
-        is_flag=True,
         type=bool,
         help="This parameter will make the prompt fully random. If this is set to True, then the seed value will be ignored.",
     )
