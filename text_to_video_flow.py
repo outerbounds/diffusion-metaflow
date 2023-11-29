@@ -9,6 +9,7 @@ from metaflow import (
     current,
     kubernetes,
     pypi,
+    project,
     S3,
 )
 from metaflow.cards import Image, Markdown
@@ -21,6 +22,7 @@ from config_base import ConfigBase
 from utils import unit_convert
 
 
+@project(name="sdvideo")
 class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
     """
     Create images from prompt values using Stable Diffusion.
@@ -145,7 +147,7 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
         image=SGM_BASE_IMAGE,
         gpu=1,
         cpu=4,
-        memory=16000,
+        memory=24000,
         disk=unit_convert(100, "GB", "MB"),
     )
     @gpu_profile(artifact_prefix="video_gpu_profile")
