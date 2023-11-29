@@ -6,7 +6,8 @@ from metaflow._vendor import click
 import tempfile
 from config import ImageInferenceConfig
 
-DIFF_USERS_IMAGE = "valayob/sdvideo-base:1.1"
+DIFF_USERS_IMAGE = "valayob/sdvideo-base:1.2"
+SGM_BASE_IMAGE = "valayob/sdvideo-sgm:1.6"
 
 
 def safe_mkdirs(_dir):
@@ -40,8 +41,9 @@ class TextToImageDiffusion:
     This is a wrapper over `diffusers` library.
     """
 
+    @classmethod
     def infer_prompt(
-        self,
+        cls,
         model_path,
         seed,
         prompts,
@@ -54,16 +56,14 @@ class TextToImageDiffusion:
         from diffusion import infer_prompt
 
         img_prompts = []
-        for prompt in prompts:
-            images = infer_prompt(
-                model_path,
-                prompt,
-                num_images=num_images,
-                batch_size=inference_conf.batch_size,
-                width=inference_conf.width,
-                height=inference_conf.height,
-                num_steps=inference_conf.num_steps,
-                seed=seed,
-            )
-            img_prompts.append((images, prompt))
-        return img_prompts
+        images_and_prompts = infer_prompt(
+            model_path,
+            prompts,
+            num_images=num_images,
+            batch_size=inference_conf.batch_size,
+            width=inference_conf.width,
+            height=inference_conf.height,
+            num_steps=inference_conf.num_steps,
+            seed=seed,
+        )
+        return images_and_prompts

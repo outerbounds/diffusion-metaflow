@@ -8,12 +8,20 @@ import shutil
 
 class ModelStore:
     @classmethod
+    def from_path(cls, base_prefix):
+        return cls(os.path.join(DATATOOLS_S3ROOT, base_prefix))
+
+    @classmethod
     def from_config(cls, config: ModelStoreConfig):
         return cls(os.path.join(DATATOOLS_S3ROOT, config.s3_prefix))
 
     def __init__(self, model_store_root) -> None:
         # model_store_root is a S3 path to where all files for the model will be loaded and saved
         self._model_store_root = model_store_root
+
+    @property
+    def root(self):
+        return self._model_store_root
 
     @staticmethod
     def _walk_directory(root):

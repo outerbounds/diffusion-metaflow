@@ -4,3 +4,5 @@ __pycache__
 .env/
 *.log
 *.sh
+video-models/
+final_render/

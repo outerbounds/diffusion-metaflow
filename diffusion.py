@@ -1,10 +1,26 @@
 import math
 from torch import autocast
 import torch
+import os
 from diffusers import AutoPipelineForText2Image
 
 SD_XL_BASE = "stable-diffusion-xl-base-1.0"
 SUPPORTED_PIPELINES = ["StableDiffusionXLPipeline", "StableDiffusionPipeline"]
+
+IMAGE_MODEL_NAME = SD_XL_BASE
+IMAGE_MODEL_ORG = "stabilityai"
+IMAGE_MODEL_PATH = "./models"
+
+
+def download_model(model_path=IMAGE_MODEL_PATH):
+    image_pipe = AutoPipelineForText2Image.from_pretrained(
+        f"{IMAGE_MODEL_ORG}/{IMAGE_MODEL_NAME}",
+        torch_dtype=torch.float16,
+        variant="fp16",
+        use_safetensors=True,
+        use_auth_token=os.environ["HF_TOKEN"],
+    )
+    image_pipe.save_pretrained(model_path)
 
 
 def _is_pipeline_supported(pipe):
@@ -56,7 +72,7 @@ def _create_batchsizes(num_images, batch_size):
 
 def infer_prompt(
     model_path,
-    prompt,
+    prompts,
     num_images=3,
     batch_size=3,
     width=512,
@@ -78,11 +94,11 @@ def infer_prompt(
     print("Using pipeline", pipe)
     generator = torch.cuda.manual_seed(seed)
     pipe = pipe.to("cuda")
-
     all_images = []
-    for _batch_size in _create_batchsizes(num_images, batch_size):
-        all_images.extend(
-            generate_images(
+    for prompt in prompts:
+        prompt_images = []
+        for _batch_size in _create_batchsizes(num_images, batch_size):
+            generated_images = generate_images(
                 pipe,
                 prompt,
                 _batch_size,
@@ -91,6 +107,7 @@ def infer_prompt(
                 generator=generator,
                 num_steps=num_steps,
             )
-        )
+            prompt_images.extend(generated_images)
+        all_images.append((prompt_images, prompt))
         print("Finished batch of images")
     return all_images
