@@ -62,7 +62,7 @@ def _image_to_tensor(input_img_path, resize=True):
             print(f"Resizing {image.size()} to (1024, 576)")
             image = TF.resize(TF.resize(image, 1024), (576, 1024))
 
-        w, h = image.size()
+        _, w, h = image.size()
 
         if h % 64 != 0 or w % 64 != 0:
             width, height = map(lambda x: x - x % 64, (w, h))
@@ -133,114 +133,13 @@ def _get_dimensions(image: Tensor, num_frames):
     return H, W, C, F, T
 
 
-def _make_video_for_one_image(
-    model,
-    image: Tensor,
-    value_dict,
-    num_frames: int,
-    decoding_t: int,
-    device: str,
-    output_folder: str,
-):
-    """
-    DOESN'T WORK: Remve Later
-    print("Running inference for Image: ", input_img_path)
-    with torch.no_grad():
-        with torch.autocast(device):
-            video_path = _make_video_for_one_image(
-                model,
-                image,
-                value_dict,
-                num_frames,
-                decoding_t,
-                device,
-                output_folder,
-            )
-    """
-    model.conditioner.to(device)
-    batch, batch_uc = get_batch(
-        get_unique_embedder_keys_from_conditioner(model.conditioner),
-        value_dict,
-        [1, num_frames],
-        T=num_frames,
-        device=device,
-    )
-    c, uc = model.conditioner.get_unconditional_conditioning(
-        batch,
-        batch_uc=batch_uc,
-        force_uc_zero_embeddings=[
-            "cond_frames",
-            "cond_frames_without_noise",
-        ],
-    )
-
-    model.conditioner.cpu()
-    torch.cuda.empty_cache()
-
-    # from here, dtype is fp16
-    for k in ["crossattn", "concat"]:
-        uc[k] = repeat(uc[k], "b ... -> b t ...", t=num_frames)
-        uc[k] = rearrange(uc[k], "b t ... -> (b t) ...", t=num_frames)
-        c[k] = repeat(c[k], "b ... -> b t ...", t=num_frames)
-        c[k] = rearrange(c[k], "b t ... -> (b t) ...", t=num_frames)
-    for k in uc.keys():
-        uc[k] = uc[k].to(dtype=torch.float16)
-        c[k] = c[k].to(dtype=torch.float16)
-
-    randn = torch.randn(
-        _get_shape(image, num_frames), device=device, dtype=torch.float16
-    )
-
-    additional_model_inputs = {}
-    additional_model_inputs["image_only_indicator"] = torch.zeros(2, num_frames).to(
-        device
-    )
-    additional_model_inputs["num_video_frames"] = batch["num_video_frames"]
-
-    for k in additional_model_inputs:
-        if isinstance(additional_model_inputs[k], torch.Tensor):
-            additional_model_inputs[k] = additional_model_inputs[k].to(
-                dtype=torch.float16
-            )
-
-    def denoiser(input, sigma, c):
-        return model.denoiser(model.model, input, sigma, c, **additional_model_inputs)
-
-    samples_z = model.sampler(denoiser, randn, cond=c, uc=uc)
-    model.en_and_decode_n_samples_a_time = decoding_t
-    model.first_stage_model.to(device)
-    samples_x = model.decode_first_stage(samples_z)
-    samples = torch.clamp((samples_x + 1.0) / 2.0, min=0.0, max=1.0)
-    model.first_stage_model.cpu()
-    torch.cuda.empty_cache()
-
-    os.makedirs(output_folder, exist_ok=True)
-    base_count = len(glob(os.path.join(output_folder, "*.mp4")))
-    video_path = os.path.join(output_folder, f"{base_count:06d}.mp4")
-    writer = cv2.VideoWriter(
-        video_path,
-        cv2.VideoWriter_fourcc(*"mp4v"),
-        value_dict["fps_id"] + 1,
-        (samples.shape[-1], samples.shape[-2]),
-    )
-
-    vid = (
-        (rearrange(samples, "t c h w -> t h w c") * 255).cpu().numpy().astype(np.uint8)
-    )
-    for frame in vid:
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        writer.write(frame)
-    writer.release()
-    return video_path
-
-
 def _write_video_to_folder(vid: Tensor, save_path, frame_rate):
     base_count = len(glob(os.path.join(save_path, "*.mp4")))
     video_path = os.path.join(save_path, f"{base_count:06d}.mp4")
 
     writer = cv2.VideoWriter(
         video_path,
-        cv2.VideoWriter_fourcc(*"MP4V"),
+        cv2.VideoWriter_fourcc(*"mp4v"),
         frame_rate,
         (vid.shape[-1], vid.shape[-2]),
     )

@@ -28,6 +28,14 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
     Create images from prompt values using Stable Diffusion.
     """
 
+    fully_random = Parameter(
+        "fully-random",
+        default=False,
+        is_flag=True,
+        type=bool,
+        help="This parameter will make the prompt fully random. If this is set to True, then the seed value will be ignored.",
+    )
+
     # max_parallel = Parameter(
     #     "max-parallel",
     #     default=1,
@@ -117,13 +125,15 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
         memory=16000,
         disk=unit_convert(100, "GB", "MB"),
     )
-    @pip(libraries={"accelerate": "0.24.1"})
     @card(customize=True)
     @step
     def generate_images(self):
         model_store = self._get_image_model_store()
         prompt_config = self.config.image.prompt_config
         seed = self.config.image.seed
+        if self.fully_random:
+            # Derive seed from metaflow pathspec
+            seed = hash(current.pathspec)
         with tempfile.TemporaryDirectory() as _dir:
             model_store.download(self.image_model_version, _dir)
             image_prompts = TextToImageDiffusion.infer_prompt(
@@ -151,7 +161,6 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
         disk=unit_convert(100, "GB", "MB"),
     )
     @gpu_profile(artifact_prefix="video_gpu_profile")
-    @pip(libraries={"accelerate": "0.24.1"})
     @card
     @step
     def generate_video_from_images(self):
@@ -165,6 +174,10 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
         model_store.download(self.video_model_version, "./checkpoints")
         print("Generating Videos")
         self.videos_save_path = []
+        seed = self.config.video.seed
+        if self.fully_random:
+            # Derive seed from metaflow pathspec
+            seed = hash(current.pathspec)
         with tempfile.TemporaryDirectory() as _dir:
             image_store = ModelStore(self.stored_images_root)
             image_store.download("images", _dir)
@@ -175,7 +188,7 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
                 self.video_model_version,
                 image_paths,
                 self.config.video.inference_config,
-                self.config.video.seed,
+                seed,
             ]
             for image_bytes, video_bytes in ImageToVideo.generate(*_args):
                 print("Saving Video")
