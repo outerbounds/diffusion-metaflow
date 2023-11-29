@@ -49,7 +49,7 @@ class ImageToVideo:
 
         with tempfile.TemporaryDirectory() as _dir:
             video_files = sample_images_to_video(
-                input_paths=image_paths[:1],
+                input_paths=image_paths,
                 num_frames=generation_config.num_frames,
                 num_steps=generation_config.num_steps,
                 version=model_version,
