@@ -52,15 +52,17 @@ def load_model_fully(model_name, num_frames, num_steps, device):
     return model
 
 
-def _image_to_tensor(input_img_path):
+def _image_to_tensor(input_img_path, resize=True):
     with Image.open(input_img_path) as image:
         if image.mode == "RGBA":
             image = image.convert("RGB")
-        if image.size != (1024, 576):
-            print(f"Resizing {image.size} to (1024, 576)")
+
+        image = ToTensor()(image)
+        if resize:
+            print(f"Resizing {image.size()} to (1024, 576)")
             image = TF.resize(TF.resize(image, 1024), (576, 1024))
 
-        w, h = 1024, 576
+        w, h = image.size()
 
         if h % 64 != 0 or w % 64 != 0:
             width, height = map(lambda x: x - x % 64, (w, h))
@@ -69,7 +71,6 @@ def _image_to_tensor(input_img_path):
                 f"WARNING: Your image is of size {h}x{w} which is not divisible by 64. We are resizing to {height}x{width}!"
             )
 
-        image = ToTensor()(image)
         image = image * 2.0 - 1.0
         return image
 
@@ -102,8 +103,9 @@ def _get_image_tensor_and_model_inputs(
     cond_aug: float,
     num_frames: int,
     device: str,
+    resize=False,
 ):
-    image = _image_to_tensor(input_img_path)
+    image = _image_to_tensor(input_img_path, resize=resize)
     image = image.unsqueeze(0).to(device)
     _inference_validation_and_warnings(image, motion_bucket_id, fps_id)
 
@@ -389,6 +391,7 @@ def sample(
     device: str = "cuda",
     low_vram_mode: bool = False,
     output_folder: Optional[str] = None,
+    resize=True,
 ):
     """
     Simple script to generate a single sample conditioned on an image `input_path` or multiple images, one for each
@@ -407,7 +410,13 @@ def sample(
     video_paths = []
     for input_img_path in all_img_paths:
         image, value_dict = _get_image_tensor_and_model_inputs(
-            input_img_path, motion_bucket_id, fps_id, cond_aug, num_frames, device
+            input_img_path,
+            motion_bucket_id,
+            fps_id,
+            cond_aug,
+            num_frames,
+            device,
+            resize=resize,
         )
         H, W, C, F, T = _get_dimensions(image, num_frames)
         force_uc_zero_embeddings = ["cond_frames", "cond_frames_without_noise"]

@@ -75,6 +75,8 @@ class VideoGenerationConfig:
     motion_bucket_id: int = 127
     # low vram mode / Runs with half the model weights
     low_vram_mode: bool = False
+    # resize the image to the model's input size
+    resize: bool = True
 
 
 @dataclass

@@ -60,6 +60,7 @@ class ImageToVideo:
                 device="cuda" if torch.cuda.is_available() else "cpu",
                 output_folder=_dir,
                 low_vram_mode=generation_config.low_vram_mode,
+                resize=generation_config.resize,
             )
             for video_file, image_path in zip(video_files, image_paths):
                 yield file_to_bytes(image_path), file_to_bytes(video_file)
