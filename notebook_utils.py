@@ -248,12 +248,14 @@ def make_movie_from_foreach_run(
 ):
     prompt_to_path = download_foreach_run_videos(flow_name, run_id, step_name, save_folder)
     video_paths = list(prompt_to_path.values())
+    prompts = list(prompt_to_path.keys())
     if len(video_paths) > 1 and max_video_in_film <= len(video_paths) and max_video_in_film is not None:
-        video_paths = random.sample(video_paths, max_video_in_film)
+        prompts = random.sample(prompts, max_video_in_film)
+        video_paths = [prompt_to_path[prompt] for prompt in prompts]
     if final_video_path is None:
         final_video_path = f'{run_id}_montage.mp4'
     if with_prompts:
-        stitch_videos(video_paths, final_video_path, film_fps=film_fps, prompts=list(prompt_to_path.keys()))
+        stitch_videos(video_paths, final_video_path, film_fps=film_fps, prompts=prompts)
     else:
         stitch_videos(video_paths, final_video_path, film_fps=film_fps)
     return final_video_path
