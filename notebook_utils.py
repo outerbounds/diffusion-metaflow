@@ -219,7 +219,7 @@ def make_movie_from_runs(
     for run, folp in exported_runs:
         video_paths.extend(glob.glob(os.path.join(folp, "**", "*.mp4")))
 
-    if max_video_in_film is not None:
+    if max_video_in_film is not None and len(video_paths) > max_video_in_film:
         video_paths = random.sample(video_paths, max_video_in_film)
     stitch_videos(video_paths, final_video_path, film_fps=film_fps)
     return final_video_path
