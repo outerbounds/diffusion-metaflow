@@ -199,7 +199,7 @@ def make_movie_from_runs(
     film_fps=24,
     final_video_path=None,
 ):
-    if max_video_in_film < 1:
+    if max_video_in_film is not None and max_video_in_film < 1:
         raise ValueError("max_video_in_film must be greater than 1.")
 
     if final_video_path is None:
