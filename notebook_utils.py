@@ -1,5 +1,6 @@
 import random
-from metaflow import Task, Flow, Step, namespace, Run
+from metaflow import Task, Flow, Step, namespace, Run, S3
+from metaflow.metaflow_config import DATATOOLS_S3ROOT
 import os
 from utils import create_prompt
 from typing import Iterable
@@ -180,12 +181,48 @@ def add_fade_animation(clip, fade_duration=1):
 
 def stitch_videos(video_paths, output_path, fade_duration=1, film_fps=24):
     from moviepy.editor import VideoFileClip, concatenate_videoclips
-
     clips = [
         add_fade_animation(VideoFileClip(path), fade_duration) for path in video_paths
     ]
     final_clip = concatenate_videoclips(clips)
     final_clip.write_videofile(output_path, fps=film_fps)
+
+
+def make_movie_from_foreach_run(
+    flow_name = 'TextToVideo',
+    run_id=None,
+    step_name='generate_video_from_images',
+    save_folder=None,
+    max_video_in_film=20,
+    film_fps=24,
+    final_video_path=None
+):
+    def dedupe_ls(x):
+        return list(dict.fromkeys(x))
+
+    with S3(s3root=f'{DATATOOLS_S3ROOT}{flow_name}/{run_id}') as s3:
+        all_paths = s3.list_recursive(step_name)
+        mp4_paths = dedupe_ls(
+            [p.url for p in all_paths if p.url.endswith('.mp4')]
+        )
+
+    prompt_to_path = {}
+    local_save_path = os.path.join(save_folder, str(run_id))
+    if not os.path.exists(local_save_path):
+        os.makedirs(local_save_path, exist_ok=True)
+    with S3() as s3:
+        for obj in s3.get_many(mp4_paths):
+            task_id = obj.key.split('/')[-4]
+            task = Task(f'{flow_name}/{run_id}/{step_name}/{task_id}')
+            video_path = os.path.join(local_save_path, f'{task_id}.mp4')
+            prompt_to_path[task.data.prompt[0]] = video_path
+            shutil.move(obj.path, video_path)
+
+    video_paths = glob.glob(os.path.join(local_save_path, '*.mp4'))
+    if len(video_paths) > 1 and max_video_in_film <= len(video_paths) and max_video_in_film is not None:
+        video_paths = random.sample(video_paths, max_video_in_film)
+    stitch_videos(video_paths, final_video_path, film_fps=film_fps)
+    return final_video_path
 
 
 def make_movie_from_runs(
