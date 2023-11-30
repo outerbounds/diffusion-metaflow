@@ -21,7 +21,6 @@ from custom_decorators import gpu_profile, pip
 from config_base import ConfigBase
 from utils import unit_convert
 
-
 @project(name="sdvideo")
 class TextToVideoForeach(FlowSpec, ConfigBase, ArtifactStore):
     """
@@ -122,39 +121,30 @@ class TextToVideoForeach(FlowSpec, ConfigBase, ArtifactStore):
             self.config.video.model_config.model_store.model_version
         )
 
-        self.subject = [
-            # 'A fawn Pembroke Welsh Corgi',
-            # 'A panda wearing sunglasses',
-            'A cute raccoon in a light blue suit',
-            'An origami brown bear'
-        ]
-
-        self.next(self.cross_product_1, foreach="subject")
+        self.subject = self.config.image.prompt_config.prompts_cross_product.subjects
+        self.next(self.cross_product_subject, foreach="subject")
 
     @step
-    def cross_product_1(self):
+    def cross_product_subject(self):
         self.action = [
-            f'{self.input} skateboarding',
-            # f'{self.input} dancing energetically',
-            f'{self.input} playing and strumming guitar',
+            f'{self.input} {action}'
+            for action in self.config.image.prompt_config.prompts_cross_product.actions
         ]
-        self.next(self.cross_product_2, foreach="action")
+        self.next(self.cross_product_action, foreach="action")
 
     @step
-    def cross_product_2(self):
+    def cross_product_action(self):
         self.location = [
-            # f'{self.input} in Bondi Beach',
-            # f'{self.input} in the sky',
-            f'{self.input} in Times Square'
+            f'{self.input} {location}'
+            for location in self.config.image.prompt_config.prompts_cross_product.locations
         ]
-        self.next(self.cross_product_3, foreach="location")
+        self.next(self.cross_product_location, foreach="location")
 
     @step
-    def cross_product_3(self):
+    def cross_product_location(self):
         self.style = [
-            # f'{self.input} in photorealistic style',
-            f'{self.input} in Anime Manga style',
-            f'{self.input} in cubist painting style'
+            f'{self.input} {style}'
+            for style in self.config.image.prompt_config.prompts_cross_product.styles
         ]
         self.next(self.generate_images, foreach="style")
 
@@ -207,9 +197,6 @@ class TextToVideoForeach(FlowSpec, ConfigBase, ArtifactStore):
     @step
     def generate_video_from_images(self):
         from video_diffusion import ImageToVideo
-
-        print("VIDEO FOR PROMPT:", self.prompt)
-
         # Based on how StabilityAI has devised the code, We will HAVETO
         # download the model to a folder called checkpoints.
         print("Downloading Video Model")
@@ -241,32 +228,26 @@ class TextToVideoForeach(FlowSpec, ConfigBase, ArtifactStore):
                 self.videos_save_path.append(save_path)
 
         shutil.rmtree("./checkpoints")
-        self.next(self.join_3)
+        self.next(self.join_styles)
 
     @step
-    def join_3(self, inputs):
+    def join_styles(self, inputs):
         self.videos_save_paths = [input.videos_save_path for input in inputs]
-        self.next(self.join_2)
+        self.next(self.join_locations)
 
     @step
-    def join_2(self, inputs):
-        self.videos_save_paths = [
-            input.videos_save_paths for input in inputs
-        ]
-        self.next(self.join_1)
+    def join_locations(self, inputs):
+        self.videos_save_paths = [input.videos_save_paths for input in inputs]
+        self.next(self.join_actions)
 
     @step
-    def join_1(self, inputs):
-        self.videos_save_paths = [
-            input.videos_save_paths for input in inputs
-        ]
-        self.next(self.join_0)
+    def join_actions(self, inputs):
+        self.videos_save_paths = [input.videos_save_paths for input in inputs]
+        self.next(self.join_subjects)
 
     @step
-    def join_0(self, inputs):
-        self.videos_save_paths = [
-            input.videos_save_paths for input in inputs
-        ]
+    def join_subjects(self, inputs):
+        self.videos_save_paths = [input.videos_save_paths for input in inputs]
         self.next(self.end)
 
     @step

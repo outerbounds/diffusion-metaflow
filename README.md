@@ -105,7 +105,7 @@ Options:
 
 ### ⭐ Generate Videos from a Custom Prompt ⭐
 
-**Source File** : [text_to_video.py](./text_to_video_flow.py)
+**Source File** : [text_to_video_flow.py](./text_to_video_flow.py)
 
 **Run Command** : 
 ```sh
@@ -123,4 +123,19 @@ flow = Flow("TextToVideo")
 run = flow.latest_successful_run
 store = ModelStore.from_path(run["generate_video_from_images"].task.pathspec)
 store.download("final_render","final_render")
+```
+
+### ⭐⭐⭐ Generate a Cross Product of Videos from a Set of Custom Prompts ⭐⭐⭐
+**Source File** : [text_to_video_foreach_flow.py](./text_to_video_foreach_flow.py)
+
+**Run Command** : 
+```sh
+python text_to_video_foreach_flow.py --package-suffixes .yaml run --config-file video_config_foreach.yaml
+```
+The schema of the [video_config_foreach.yaml](./video_config_foreach.yaml) can be found the [config.py](./config.py) file.
+
+**Extract Videos Post Completion**
+```python
+from notebook_utils import download_foreach_run_videos
+download_foreach_run_videos(run_id='<YOUR RUN ID>')
 ```

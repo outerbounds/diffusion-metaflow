@@ -1,4 +1,4 @@
-from typing import Union, Optional, List, Any
+from typing import Union, Optional, List, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -21,11 +21,14 @@ DEFAULT_SUBJECTS = [
     "alan turing",
 ]
 
-DEFAULT_PROMPS = [
+DEFAULT_PROMPTS = [
     "Astronaut in on the amazon jungle petting a tiger, 8k very detailed and realistic, cinematic lighting, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration",
     "spungebob squarepants building machine learning models at NASA, 8k very detailed and realistic, cinematic lighting, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, animated",
 ]
 
+DEFAULT_PROMPTS_CROSS_PRODUCT = {
+
+}
 
 @dataclass
 class ModelStoreConfig:
@@ -82,7 +85,8 @@ class VideoGenerationConfig:
 
 @dataclass
 class PromptConfig:
-    prompts: List[str] = field(default_factory=lambda: DEFAULT_PROMPS)
+    prompts: List[str] = field(default_factory=lambda: DEFAULT_PROMPTS)
+    prompts_cross_product: Dict[str, List[str]] = field(default_factory=lambda: DEFAULT_PROMPTS_CROSS_PRODUCT)
     num_images: int = 10  # Number of images to create per prompt
 
 
