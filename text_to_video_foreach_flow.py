@@ -104,15 +104,6 @@ class TextToVideoForeach(FlowSpec, ConfigBase, ArtifactStore):
     def _make_prompt(subject, action, location, style):
         return f"{subject} {action} {location} {style}"
 
-    def recursively_flatten_list(self, ls):
-        if ls == []:
-            return ls
-        if isinstance(ls[0], list):
-            return self.recursively_flatten_list(ls[0]) + self.recursively_flatten_list(
-                ls[1:]
-            )
-        return ls[:1] + self.recursively_flatten_list(ls[1:])
-
     @step
     def start(self):
         self.next(self.upload_models)
@@ -298,15 +289,20 @@ class TextToVideoForeach(FlowSpec, ConfigBase, ArtifactStore):
 
     @step
     def join_subjects(self, inputs):
-        self.style_outputs = [i.style_outputs for i in inputs]
+        self.style_outputs = [j for i in inputs for j in i.style_outputs]
         self.merge_artifacts(
-            inputs, exclude=["subject", "stored_images_root", "prompt_results"]
+            inputs,
+            include=[
+                "video_model_version",
+                "image_model_version",
+            ],
         )
         self.next(self.end)
 
     @step
     def end(self):
         print("Finished successfully")
+
 
 if __name__ == "__main__":
     TextToVideoForeach()

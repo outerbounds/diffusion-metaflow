@@ -147,6 +147,29 @@ def get_runs(
         return get_runs_by_branch(flow_name, project, branch)
 
 
+def get_outputs_for_text_to_video_foreach(
+    run_id=None, tags=None, branch=None, project=None, max_runs=None, save_folder=None
+):
+    if all([run_id, tags, branch, project]):
+        raise ValueError("Only one of run_id, tag, branch, project can be specified.")
+    if (branch or project) and (all([branch, project]) is False):
+        raise ValueError("Both branch and project must be specified.")
+    if save_folder is None:
+        print(
+            "No save folder specified. Using 'final_render' folder in current working directory."
+        )
+        save_folder = os.path.join(os.getcwd(), "final_render")
+    kwags = dict(run_id=run_id, tags=tags, branch=branch, project=project)
+    ret_data = []
+    for idx, run in enumerate(get_runs("TextToVideoForeach", **kwags)):
+        if max_runs is not None and idx >= max_runs:
+            break
+        if not run.successful:
+            continue
+        ret_data.append((run, run.data.style_outputs))
+    return ret_data
+
+
 def export_image_to_video_conversions(
     run_id=None, tags=None, branch=None, project=None, max_runs=None, save_folder=None
 ):
@@ -182,15 +205,24 @@ def add_fade_animation(clip, fade_duration=1):
 
 def stitch_videos(video_paths, output_path, fade_duration=1, film_fps=24, prompts=[]):
     from moviepy.editor import VideoFileClip, concatenate_videoclips
+
     if len(prompts) > 0:
         from moviepy.editor import TextClip, CompositeVideoClip
-        assert len(prompts) == len(video_paths), "If you pass prompts arg to stitch_videos, it must be same length as video_paths."
+
+        assert len(prompts) == len(
+            video_paths
+        ), "If you pass prompts arg to stitch_videos, it must be same length as video_paths."
         clips = []
         for path, prompt in zip(video_paths, prompts):
             video_clip = add_fade_animation(VideoFileClip(path), fade_duration)
-            text = TextClip(prompt, font='Amiri-regular', color='white',fontsize=24)
-            text_col = text.on_color(size=(video_clip.w // 2 + text.w, text.h+10), color=(0,0,0), pos=(6,'center'), col_opacity=0.4)
-            text_mov = text_col.set_pos( (80, 50) )
+            text = TextClip(prompt, font="Amiri-regular", color="white", fontsize=24)
+            text_col = text.on_color(
+                size=(video_clip.w // 2 + text.w, text.h + 10),
+                color=(0, 0, 0),
+                pos=(6, "center"),
+                col_opacity=0.4,
+            )
+            text_mov = text_col.set_pos((80, 50))
             text_mov.duration = video_clip.duration
             text_clip = add_fade_animation(text_mov, fade_duration)
             composite_clip = CompositeVideoClip([video_clip, text_clip])
@@ -198,26 +230,25 @@ def stitch_videos(video_paths, output_path, fade_duration=1, film_fps=24, prompt
             clips.append(composite_clip)
     else:
         clips = [
-            add_fade_animation(VideoFileClip(path), fade_duration) for path in video_paths
+            add_fade_animation(VideoFileClip(path), fade_duration)
+            for path in video_paths
         ]
     final_clip = concatenate_videoclips(clips)
     final_clip.write_videofile(output_path, fps=film_fps)
 
 
 def download_foreach_run_videos(
-    flow_name = 'TextToVideoForeach',
+    flow_name="TextToVideoForeach",
     run_id=None,
-    step_name='generate_video_from_images',
-    save_folder='final_render'
+    step_name="generate_video_from_images",
+    save_folder="final_render",
 ):
     def dedupe_ls(x):
         return list(dict.fromkeys(x))
 
-    with S3(s3root=f'{DATATOOLS_S3ROOT}{flow_name}/{run_id}') as s3:
+    with S3(s3root=f"{DATATOOLS_S3ROOT}{flow_name}/{run_id}") as s3:
         all_paths = s3.list_recursive(step_name)
-        mp4_paths = dedupe_ls(
-            [p.url for p in all_paths if p.url.endswith('.mp4')]
-        )
+        mp4_paths = dedupe_ls([p.url for p in all_paths if p.url.endswith(".mp4")])
 
     prompt_to_path = {}
     local_save_path = os.path.join(save_folder, str(run_id))
@@ -225,35 +256,41 @@ def download_foreach_run_videos(
         os.makedirs(local_save_path, exist_ok=True)
     with S3() as s3:
         for obj in s3.get_many(mp4_paths):
-            task_id = obj.key.split('/')[-4]
-            task = Task(f'{flow_name}/{run_id}/{step_name}/{task_id}')
-            video_path = os.path.join(local_save_path, f'{task_id}.mp4')
+            task_id = obj.key.split("/")[-4]
+            task = Task(f"{flow_name}/{run_id}/{step_name}/{task_id}")
+            video_path = os.path.join(local_save_path, f"{task_id}.mp4")
             prompt_to_path[task.data.prompt[0]] = video_path
             shutil.move(obj.path, video_path)
     return prompt_to_path
 
 
 def make_movie_from_foreach_run(
-    flow_name = 'TextToVideoForeach',
+    flow_name="TextToVideoForeach",
     run_id=None,
-    step_name='generate_video_from_images',
-    save_folder='final_render',
+    step_name="generate_video_from_images",
+    save_folder="final_render",
     max_video_in_film=20,
     film_fps=24,
     final_video_path=None,
-    with_prompts=False 
+    with_prompts=False
     # apt-get -y install ffmpeg imagemagick
     # in /etc/ImageMagick-6/policy.xml, comment this line out:
     # <policy domain="path" rights="none" pattern="@*"/>
 ):
-    prompt_to_path = download_foreach_run_videos(flow_name, run_id, step_name, save_folder)
+    prompt_to_path = download_foreach_run_videos(
+        flow_name, run_id, step_name, save_folder
+    )
     video_paths = list(prompt_to_path.values())
     prompts = list(prompt_to_path.keys())
-    if len(video_paths) > 1 and max_video_in_film <= len(video_paths) and max_video_in_film is not None:
+    if (
+        len(video_paths) > 1
+        and max_video_in_film <= len(video_paths)
+        and max_video_in_film is not None
+    ):
         prompts = random.sample(prompts, max_video_in_film)
         video_paths = [prompt_to_path[prompt] for prompt in prompts]
     if final_video_path is None:
-        final_video_path = f'{run_id}_montage.mp4'
+        final_video_path = f"{run_id}_montage.mp4"
     if with_prompts:
         stitch_videos(video_paths, final_video_path, film_fps=film_fps, prompts=prompts)
     else:
