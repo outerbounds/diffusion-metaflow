@@ -1,6 +1,6 @@
 # Run Stable Diffusion With Metaflow 👋
 
-This repository offers you a framework to create massive amounts of AI-generated images using the Stable Diffusion model. 
+This repository offers you a framework to create massive amounts of AI-generated images using the Stable Diffusion model.
 The Stable Diffusion model is integrated into a Metaflow workflow that will help you scale horizontally or vertically to quickly produce as many images as you need. To run the code in this repository you will need access to a Metaflow deployment configured with S3 storage. If you want to learn more about Metaflow or need help getting set up, find us on [Slack](http://slack.outerbounds.co/)!
 
 ![](/images/einstein_grid.png)
@@ -10,7 +10,7 @@ Stable Diffusion Intepretations of Einstein
 </p>
 
 # Operate Metaflow on AWS Infrastructure
-Before running the flow ensure that Metaflow-related infrastructure is [deployed](https://outerbounds.com/docs/aws-deployment-guide/) and [configured](https://outerbounds.com/docs/configure-metaflow/) on your AWS account and GPUs are configured for the compute environment (AWS Batch / EKS). 
+Before running the flow ensure that Metaflow-related infrastructure is [deployed](https://outerbounds.com/docs/aws-deployment-guide/) and [configured](https://outerbounds.com/docs/configure-metaflow/) on your AWS account and GPUs are configured for the compute environment (AWS Batch / EKS).
 
 If you don't have infrastructure setup, you can set it up with this [cloudformation template](https://github.com/outerbounds/metaflow-tools/blob/master/aws/cloudformation/metaflow-cfn-template.yml). To deploy the GPU infrastructure on AWS, change the [ComputeEnvInstanceTypes](https://github.com/outerbounds/metaflow-tools/blob/d0da1fa4f9aa6845f8091d06a1b7a99962986c98/aws/cloudformation/metaflow-cfn-template.yml#L42) in the Cloudformation template or the Cloudformation UI. More detailed instructions on setting up infrastructure can be found [here](https://outerbounds.com/docs/cloudformation/).
 
@@ -44,7 +44,7 @@ Before running the flow ensure you have the necessary AWS infrastructure setup f
 ## Step 1 : Download the Stable Diffusion Huggingface model
 - Ensure that you have signed the waiver for [CompVis/stable-diffusion-v-1-4-original](https://huggingface.co/CompVis/stable-diffusion-v-1-4-original) model on the Huggingface hub.
 - Create a [Huggingface hub access token](https://huggingface.co/docs/hub/security-tokens)
-- Run the below command after replacing `<myhuggingfacetoken>` with the Huggingface hub token created in the previous step. Run this command only once to download the model to the local machine. 
+- Run the below command after replacing `<myhuggingfacetoken>` with the Huggingface hub token created in the previous step. Run this command only once to download the model to the local machine.
     ```sh
     HF_TOKEN=<myhuggingfacetoken> python model_download.py
     ```
@@ -52,11 +52,11 @@ Before running the flow ensure you have the necessary AWS infrastructure setup f
 ## Step 2: Run Metaflow Flows
 
 
-### ⭐ Generate Images from a Simple Prompt ⭐ 
+### ⭐ Generate Images from a Simple Prompt ⭐
 **Source File** : [meta_diffusers_text.py](./meta_diffusers_text.py)
 
 
-**Run Command** : 
+**Run Command** :
 ```sh
 python meta_diffusers_text.py run \
     --max-parallel 10 \
@@ -85,7 +85,7 @@ Options:
 ### ⭐ Generate Many Images with Diverse Styles ⭐
 **Source File** : [meta_dynamic_prompts.py](./meta_dynamic_prompts.py)
 
-**Run Command** : 
+**Run Command** :
 ```sh
 python meta_dynamic_prompts.py run --config-file ./style_config.yaml
 ```
@@ -107,7 +107,7 @@ Options:
 
 **Source File** : [text_to_video_flow.py](./text_to_video_flow.py)
 
-**Run Command** : 
+**Run Command** :
 ```sh
 python text_to_video_flow.py --package-suffixes .yaml run --config-file ./video_config.yaml
 ```
@@ -128,9 +128,9 @@ store.download("final_render","final_render")
 ### ⭐⭐⭐ Generate a Cross Product of Videos from a Set of Custom Prompts ⭐⭐⭐
 **Source File** : [text_to_video_foreach_flow.py](./text_to_video_foreach_flow.py)
 
-**Run Command** : 
+**Run Command** :
 ```sh
-python text_to_video_foreach_flow.py --package-suffixes .yaml run --config-file video_config_foreach.yaml
+python text_to_video_foreach_flow.py --package-suffixes .yaml run --config-file style_video.yaml
 ```
 The schema of the [video_config_foreach.yaml](./video_config_foreach.yaml) can be found the [config.py](./config.py) file.
 

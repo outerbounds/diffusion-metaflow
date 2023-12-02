@@ -1,6 +1,8 @@
 from typing import Union, Optional, List, Dict, Any
 from dataclasses import dataclass, field
 from enum import Enum
+from collections import namedtuple
+
 
 VIDEO_MODEL_NAME = "stable-video-diffusion-img2vid"
 
@@ -26,9 +28,8 @@ DEFAULT_PROMPTS = [
     "spungebob squarepants building machine learning models at NASA, 8k very detailed and realistic, cinematic lighting, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, animated",
 ]
 
-DEFAULT_PROMPTS_CROSS_PRODUCT = {
+DEFAULT_PROMPTS_CROSS_PRODUCT = {}
 
-}
 
 @dataclass
 class ModelStoreConfig:
@@ -66,6 +67,14 @@ class ImageInferenceConfig:
 
 
 @dataclass
+class MotionBucket:
+    bucket_id: Optional[int] = 127
+    sample_multiple_buckets: bool = False
+    num_motion_buckets_to_sample: Optional[int] = 20
+    motion_bucket_range: List[int] = field(default_factory=lambda: [0, 255])
+
+
+@dataclass
 class VideoGenerationConfig:
     # Frame-rate of the generated video
     frame_rate: int = 10
@@ -75,18 +84,18 @@ class VideoGenerationConfig:
     num_steps: int = 50
     # number of frames to generate
     num_frames: int = 50
-    # motion bucket id
-    motion_bucket_id: int = 127
     # low vram mode / Runs with half the model weights
     low_vram_mode: bool = False
     # resize the image to the model's input size
     resize: bool = True
+    # Motion bucket related configurations. These affect how many videos will be
+    # created based on motion buckets.
+    motion_bucket: MotionBucket = field(default_factory=MotionBucket)
 
 
 @dataclass
 class PromptConfig:
     prompts: List[str] = field(default_factory=lambda: DEFAULT_PROMPTS)
-    prompts_cross_product: Dict[str, List[str]] = field(default_factory=lambda: DEFAULT_PROMPTS_CROSS_PRODUCT)
     num_images: int = 10  # Number of images to create per prompt
 
 
@@ -95,6 +104,8 @@ class ImageStylePromptConfig:
     styles: List[str] = field(default_factory=lambda: DEFAULT_STYLES)
     subjects: List[str] = field(default_factory=lambda: DEFAULT_SUBJECTS)
     num_images: int = 10  # Number of images to create per (subject, style)
+    locations: List[str] = field(default_factory=lambda: [])
+    actions: List[str] = field(default_factory=lambda: [])
 
 
 @dataclass
@@ -136,6 +147,18 @@ class TextToVideoDiffusionConfig:
     )
 
 
+@dataclass
+class TextToVideoWithStylesDiffusionConfig:
+    # NO seed set in this objects as the seed is set in the
+    # sub objects
+    video: ImageToVideoDiffusionConfig = field(
+        default_factory=ImageToVideoDiffusionConfig
+    )
+    image: ImageStylePromptDiffusionConfig = field(
+        default_factory=ImageStylePromptDiffusionConfig
+    )
+
+
 def create_config(filepath, _class):
     from omegaconf import OmegaConf
 
@@ -152,17 +175,42 @@ def load_config(filepath, _class):
     return trainconf
 
 
+StyleVideoOutput = namedtuple(
+    "StyleVideoOutput",
+    ["subject", "style", "action", "location", "image_paths", "video_paths"],
+)
+
+
+def get_style_video_namedtuple(
+    subject: str,
+    style: str,
+    action: str,
+    location: str,
+    image_paths: List[str],
+    video_paths: Dict[str, str],  # {motion_bucket_id: video_path}
+) -> StyleVideoOutput:
+    return StyleVideoOutput(subject, style, action, location, image_paths, video_paths)
+
+
+SUPPORTED_CONFIGS = {
+    "text": TextToImageDiffusionConfig,
+    "style": ImageStylePromptDiffusionConfig,
+    "video": TextToVideoDiffusionConfig,
+    "stylevideo": TextToVideoWithStylesDiffusionConfig,
+}
+
+
 if __name__ == "__main__":
     import sys
 
     assert (
         len(sys.argv) == 3
-    ), "usage : `python config.py <type> example.yaml`. Allowed <type> : `text`, `style`, `video`"
-    if sys.argv[1] == "text":
-        create_config(sys.argv[2], TextToImageDiffusionConfig)
-    elif sys.argv[1] == "style":
-        create_config(sys.argv[2], ImageStylePromptDiffusionConfig)
-    elif sys.argv[1] == "video":
-        create_config(sys.argv[2], TextToVideoDiffusionConfig)
-    else:
-        raise ValueError("Invalid argument. Must be `create` or `load`")
+    ), "usage : `python config.py <type> example.yaml`. Allowed <type> : %s" % (
+        ", ".join(SUPPORTED_CONFIGS.keys())
+    )
+    if sys.argv[1] not in SUPPORTED_CONFIGS:
+        raise ValueError(
+            "Invalid argument. Must be one of %s"
+            % (", ".join(SUPPORTED_CONFIGS.keys()))
+        )
+    create_config(sys.argv[2], SUPPORTED_CONFIGS[sys.argv[1]])

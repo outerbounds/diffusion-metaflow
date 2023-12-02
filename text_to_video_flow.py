@@ -189,7 +189,12 @@ class TextToVideo(FlowSpec, ConfigBase, ArtifactStore):
                 self.config.video.inference_config,
                 seed,
             ]
-            for image_bytes, video_bytes in ImageToVideo.generate(*_args):
+            for (
+                image_path,
+                image_bytes,
+                video_bytes,
+                motion_bucket_id,
+            ) in ImageToVideo.generate(*_args):
                 print("Saving Video")
                 save_path = self.save_image_and_video(image_bytes, video_bytes)
                 print("Video Saved To Path %s" % save_path)
