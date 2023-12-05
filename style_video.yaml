@@ -1,0 +1,55 @@
+video:
+  model_config:
+    model_store:
+      pretrained_model_path: ./video-models
+      force_upload: false
+      s3_prefix: models/diffusion-models/
+      model_version: stable-video-diffusion-img2vid
+    model_name: stable-video-diffusion-img2vid
+  inference_config:
+    # Numbers provided here are for Tesla V100 16GB GPUs. Adjust accordingly.
+    frame_rate: 7 # Affects GPU VRAM usage
+    decoding_timesteps: 1 # Affects GPU VRAM usage
+    num_steps: 25
+    num_frames: 20 # Affects GPU VRAM usage
+    low_vram_mode: true # Affects GPU VRAM usage
+    resize: true # Affects GPU VRAM usage
+    motion_bucket:
+      bucket_id: 127
+      sample_multiple_buckets: true # Setting This to TRUE will results in `num_motion_buckets_to_sample` video created from different samples of motion buckets
+      num_motion_buckets_to_sample: 3
+      motion_bucket_range: [0, 255]
+  seed: 42
+image:
+  model_config:
+    model_store:
+      pretrained_model_path: ./models
+      force_upload: false
+      s3_prefix: models/diffusion-models/
+      model_version: stable-diffusion-xl-base-1.0.1
+    model_name: stable-diffusion-xl-base-1.0.1
+  inference_config:
+    batch_size: 2
+    height: 576
+    width: 1024
+    num_steps: 50
+  style_prompt_config:
+    subjects:
+    # - A fawn Pembroke Welsh Corgi
+    - A panda wearing sunglasses
+    # - A cute raccoon in a light blue suit
+    - An origami brown bear
+    actions:
+    - skateboarding
+    # - dancing energetically
+    # - playing and strumming guitar
+    locations:
+    - in Bondi Beach
+    # - in the sky
+    # - in Times Square
+    styles:
+    # - in photorealistic style
+    - in Anime Manga style
+    # - in cubist painting style
+    num_images: 2
+  seed: 42

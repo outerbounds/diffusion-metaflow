@@ -16,6 +16,7 @@ from torch import autocast
 from PIL import Image
 from torchvision.transforms import ToTensor, functional as TF
 from torch import Tensor
+import itertools
 
 CURRENT_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -283,7 +284,7 @@ def sample(
     num_steps: Optional[int] = None,
     version: str = "svd",
     fps_id: int = 6,
-    motion_bucket_id: int = 127,
+    motion_buckets: List[int] = [127],
     cond_aug: float = 0.02,
     seed: int = 23,
     decoding_t: int = 14,  # Number of frames decoded at a time! This eats most VRAM. Reduce if necessary.
@@ -307,10 +308,14 @@ def sample(
     torch.manual_seed(seed)
     all_img_paths = input_paths
     video_paths = []
-    for input_img_path in all_img_paths:
+    image_motion_bucket_product = itertools.product(
+        all_img_paths,
+        motion_buckets,
+    )
+    for input_img_path, _motion_bucket_id in image_motion_bucket_product:
         image, value_dict = _get_image_tensor_and_model_inputs(
             input_img_path,
-            motion_bucket_id,
+            _motion_bucket_id,
             fps_id,
             cond_aug,
             num_frames,
@@ -336,7 +341,7 @@ def sample(
             decoding_t=decoding_t,
         )
         video_path = _write_video_to_folder(samples, output_folder, fps_id)
-        video_paths.append(video_path)
+        video_paths.append((_motion_bucket_id, video_path))
     return video_paths
 
 

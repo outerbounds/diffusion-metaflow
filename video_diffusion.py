@@ -1,7 +1,13 @@
 import os
 import tempfile
 from typing import List
-from config import VideoGenerationConfig, VideoModelConfig, VIDEO_MODEL_NAME
+from config import (
+    VideoGenerationConfig,
+    VideoModelConfig,
+    VIDEO_MODEL_NAME,
+    MotionBucket,
+)
+import random
 
 VIDEO_MODEL_ORG = "stabilityai"
 VIDEO_MODEL_PATH = "./video-models"
@@ -34,6 +40,31 @@ def download_model(model_path=VIDEO_MODEL_PATH):
 
 class ImageToVideo:
     @classmethod
+    def extract_motion_buckets(cls, motion_bucket: MotionBucket):
+        if motion_bucket.sample_multiple_buckets:
+            if motion_bucket.num_motion_buckets_to_sample is None:
+                raise ValueError(
+                    "If sample_multiple_buckets is set to True, then num_motion_buckets_to_sample must be set to a valid integer"
+                )
+            elif motion_bucket.motion_bucket_range is None:
+                raise ValueError(
+                    "If sample_multiple_buckets is set to True, then motion_bucket_range must be set to a valid list of integers"
+                )
+            elif motion_bucket.num_motion_buckets_to_sample > len(
+                range(*motion_bucket.motion_bucket_range)
+            ):
+                raise ValueError(
+                    "num_motion_buckets_to_sample must be greater than the number of buckets in the range"
+                )
+            else:
+                return random.sample(
+                    list(range(*motion_bucket.motion_bucket_range)),
+                    motion_bucket.num_motion_buckets_to_sample,
+                )
+        else:
+            return [motion_bucket.bucket_id]
+
+    @classmethod
     def generate(
         cls,
         model_version,
@@ -46,6 +77,9 @@ class ImageToVideo:
         )
         import torch
 
+        # TODO: Support sampling different motion buckets for each image
+        # based on generation_config.motion_bucket
+        motion_buckets = cls.extract_motion_buckets(generation_config.motion_bucket)
         with tempfile.TemporaryDirectory() as _dir:
             video_files = sample_images_to_video(
                 input_paths=image_paths,
@@ -53,7 +87,7 @@ class ImageToVideo:
                 num_steps=generation_config.num_steps,
                 version=model_version,
                 fps_id=generation_config.frame_rate,
-                motion_bucket_id=generation_config.motion_bucket_id,
+                motion_buckets=motion_buckets,
                 seed=seed,
                 decoding_t=generation_config.decoding_timesteps,
                 device="cuda" if torch.cuda.is_available() else "cpu",
@@ -61,8 +95,11 @@ class ImageToVideo:
                 low_vram_mode=generation_config.low_vram_mode,
                 resize=generation_config.resize,
             )
-            for video_file, image_path in zip(video_files, image_paths):
-                yield file_to_bytes(image_path), file_to_bytes(video_file)
+            for video_file_tuple, image_path in zip(video_files, image_paths):
+                motion_bucket_id, video_path = video_file_tuple
+                yield image_path, file_to_bytes(image_path), file_to_bytes(
+                    video_path
+                ), motion_bucket_id
 
 
 def file_to_bytes(path):

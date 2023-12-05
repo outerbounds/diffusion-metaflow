@@ -12,9 +12,13 @@ video:
     decoding_timesteps: 1 # Affects GPU VRAM usage
     num_steps: 25
     num_frames: 20 # Affects GPU VRAM usage
-    motion_bucket_id: 150
     low_vram_mode: true # Affects GPU VRAM usage
     resize: true # Affects GPU VRAM usage
+    motion_bucket:
+      bucket_id: 127
+      sample_multiple_buckets: false # Setting This to TRUE will results in `num_motion_buckets_to_sample` video created from different samples of motion buckets
+      num_motion_buckets_to_sample: 20
+      motion_bucket_range: [0, 255]
   seed: 12232
 image:
   model_config:
@@ -31,11 +35,11 @@ image:
     num_steps: 25
   prompt_config:
     prompts:
-    - epic landscape where a colossal dragon looms out of the stormy sky, with huge red flames comes up of its mouth. 
-      Its scales are armored plates of ancient design, and its mane of sharp spines crests magnificently along its neck. 
-      At the mountain pass below, a lone figure carrying sword cloaked in a flowing robe stands resilient, facing the beast. 
-      The silhouette of the figure is backlit by a sliver of light piercing the horizon, which casts an ethereal glow over the 
-      rugged terrain. The dragon's breath swirls around it, mingling with the clouds, as the ground is littered with jagged rocks. 
+    - epic landscape where a colossal dragon looms out of the stormy sky, with huge red flames comes up of its mouth.
+      Its scales are armored plates of ancient design, and its mane of sharp spines crests magnificently along its neck.
+      At the mountain pass below, a lone figure carrying sword cloaked in a flowing robe stands resilient, facing the beast.
+      The silhouette of the figure is backlit by a sliver of light piercing the horizon, which casts an ethereal glow over the
+      rugged terrain. The dragon's breath swirls around it, mingling with the clouds, as the ground is littered with jagged rocks.
       This scene is a clash of legends, a moment captured in the timeless dance of human versus myth.
     num_images: 8
   seed: 21412
