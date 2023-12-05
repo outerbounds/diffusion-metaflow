@@ -4,7 +4,7 @@ import torch
 import os
 from diffusers import AutoPipelineForText2Image
 
-SD_XL_BASE = "stable-diffusion-xl-base-1.0"
+SD_XL_BASE = "sdxl-turbo"
 SUPPORTED_PIPELINES = ["StableDiffusionXLPipeline", "StableDiffusionPipeline"]
 
 IMAGE_MODEL_NAME = SD_XL_BASE

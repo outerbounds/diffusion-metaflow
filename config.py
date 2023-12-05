@@ -7,7 +7,7 @@ from collections import namedtuple
 VIDEO_MODEL_NAME = "stable-video-diffusion-img2vid"
 
 MODELS_BASE_S3_PATH = "models/diffusion-models/"
-IMAGE_MODEL_NAME = "stable-diffusion-xl-base-1.0.1"
+IMAGE_MODEL_NAME = "sdxl-turbo"
 MODEL_PATH = "./models"
 DEFAULT_STYLES = [
     "van gogh",
