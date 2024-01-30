@@ -1,6 +1,4 @@
 from metaflow.cards import Markdown, Table, VegaChart
-from metaflow.plugins.cards.card_modules.card import MetaflowCardComponent
-from metaflow.plugins.cards.card_modules.components import with_default_component_id
 from functools import wraps
 import threading
 from datetime import datetime
