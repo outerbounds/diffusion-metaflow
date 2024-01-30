@@ -369,7 +369,7 @@ class gpu_profile:
 
 
 def translate_to_vegalite(
-    tstamps, vals, y_label, legend, line_color=None, percentage_format=False
+    tstamps, vals, description ,y_label, legend, line_color=None, percentage_format=False
 ):
     # Preprocessing for Vega-Lite
     # Assuming tstamps is a list of datetime objects and vals is a list of values
@@ -378,7 +378,7 @@ def translate_to_vegalite(
     # Base Vega-Lite spec
     vega_lite_spec = {
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-        "description": "Translated line chart from Matplotlib to Vega-Lite",
+        "description": description,
         "data": {"values": data},
         "width": 600,
         "height": 400,
@@ -418,6 +418,7 @@ def profile_plots(device_id, ts, gpu, mem_used, mem_total):
         tstamps,
         gpu,
         "GPU utilization",
+        "GPU utilization",
         "device: %s" % device_id,
         line_color=GPU_COLOR,
         percentage_format=True,
@@ -425,6 +426,7 @@ def profile_plots(device_id, ts, gpu, mem_used, mem_total):
     mem_plot = translate_to_vegalite(
         tstamps,
         mem,
+        "Percentage Memory utilization",
         "Percentage Memory utilization",
         "device: %s" % device_id,
         line_color=MEM_COLOR,
