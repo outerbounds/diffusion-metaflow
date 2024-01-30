@@ -8,6 +8,7 @@ from config import TextToImageDiffusionConfig
 from base import DIFF_USERS_IMAGE, TextToImageDiffusion, ArtifactStore
 from config_base import ConfigBase
 from utils import unit_convert
+from gpu_profiler import gpu_profile
 
 
 class TextToImages(FlowSpec, ConfigBase, ArtifactStore, TextToImageDiffusion):
@@ -69,6 +70,7 @@ class TextToImages(FlowSpec, ConfigBase, ArtifactStore, TextToImageDiffusion):
         memory=16000,
         disk=unit_convert(100, "GB", "MB"),
     )
+    @gpu_profile(interval=1)
     @card
     @step
     def generate_images(self):
