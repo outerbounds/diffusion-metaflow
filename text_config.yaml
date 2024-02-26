@@ -3,8 +3,8 @@ model_config:
     pretrained_model_path: ./models
     force_upload: false
     s3_prefix: models/diffusion-models/
-    model_version: stable-diffusion-xl-base-1.0.1
-  model_name: stable-diffusion-xl-base-1.0.1
+    model_version: sdxl-turbo
+  model_name: sdxl-turbo
 inference_config:
   batch_size: 1
   height: 512
