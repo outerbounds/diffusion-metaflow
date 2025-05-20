@@ -1,6 +1,6 @@
 import os
 import tempfile
-from metaflow import FlowSpec, step, Parameter, batch, card, current, kubernetes, pypi
+from metaflow import FlowSpec, step, Parameter, card, current, kubernetes, pypi
 from metaflow.cards import Image, Markdown
 from model_store import ModelStore
 from config import TextToImageDiffusionConfig
